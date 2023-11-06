@@ -8,23 +8,54 @@ from typing import *
 import sys
 import os
 import math
+from pathlib import Path
+import csv
 import uuid
 import numpy as np
 import cv2 as cv
 
+OPENCV_WINDOW_DIMENSIONS = (math.floor(16/9 * 400), 400)
+MEASUREMENTS_CSV = "measurements.csv"
+MEASUREMENTS_IMAGES = "measurements"
 
 REFERENCE_OBJECT_CALIBRATION_DISTANCE = 1
 REFERENCE_OBJECT_CALIBRATION_DIAMETER_PIXELS = 230
 REFERENCE_OBJECT_DIAMETER_METERS = 0.25
-
 FOCAL_LENGTH = (REFERENCE_OBJECT_CALIBRATION_DIAMETER_PIXELS *
                 REFERENCE_OBJECT_CALIBRATION_DISTANCE)/REFERENCE_OBJECT_DIAMETER_METERS
 
-OPENCV_WINDOW_DIMENSIONS = (math.floor(16/9 * 400), 400)
-
 
 def distance_to_reference_object_meters(size_in_px: int):
+    """
+    # Some tests with real world data:
+
+    ```
+    Distance(200) = 230px*m / 200px = 1,15m; Real: 1,20m
+    Distance(86) = 230px*m / 86px = 2,67m; Real: 2,70m
+    Distance(66) = 230px*m / 66px = 3,48m;
+    Distance(98) = 230/98 = 2,34m; Real: 2,29m
+    ```
+    """
     return (FOCAL_LENGTH * REFERENCE_OBJECT_DIAMETER_METERS) / size_in_px
+
+
+CAMERA_HORIZONTAL_FIELD_OF_VIEW_RAD = 2
+CAMERA_HORIZONTAL_PIXELS = 1280
+
+
+def horizontal_angle_to_reference_object_rad(x_pixel: int):
+    return ((x_pixel - CAMERA_HORIZONTAL_PIXELS / 2) / CAMERA_HORIZONTAL_PIXELS * 2) * CAMERA_HORIZONTAL_FIELD_OF_VIEW_RAD / 2
+
+# 0px => -1 | x / (0px - x) = -1
+# CAMERA_HORIZONTAL_PIXELS / 2 => 0 | x / (CAMERA_HORIZONTAL_PIXELS / 2 - x) = 0
+# CAMERA_HORIZONTAL_PIXELS => 1
+
+CAMERA_VERTICAL_FIELD_OF_VIEW_RAD = 2
+CAMERA_VERTICAL_PIXELS = 720
+
+
+def vertical_angle_to_reference_object_rad(y_pixel: int):
+    return ((y_pixel - CAMERA_VERTICAL_PIXELS / 2) / CAMERA_VERTICAL_PIXELS * 2) * CAMERA_VERTICAL_FIELD_OF_VIEW_RAD / 2
 
 
 cam = None
@@ -74,15 +105,20 @@ def find_reference_object(img) -> ReferenceObjectPosition | None:
             best_y = y
             best_r = r
     # TODO: fill in correct x, y, and z coordinates
-    return ReferenceObjectPosition(
+    distance = math.floor(
+        distance_to_reference_object_meters(2*best_r) * 100) / 100
+    alpha_x = horizontal_angle_to_reference_object_rad(best_x)
+    rop = ReferenceObjectPosition(
         best_x,
         best_y,
         best_r,
-        math.floor(distance_to_reference_object_meters(2*best_r) * 100) / 100,
-        0,
-        0,
-        0
+        distance,
+        math.floor(math.sin(alpha_x) * distance * 100) / 100,
+        math.floor(math.sin(vertical_angle_to_reference_object_rad(
+            best_y)) * distance * 100) / 100,
+        math.floor(math.cos(alpha_x) * distance * 100) / 100
     )
+    return rop
 
 
 WINDOW_PREVIEW_OBJECT = "preview object"
@@ -90,33 +126,43 @@ cv.namedWindow(WINDOW_PREVIEW_OBJECT, cv.WINDOW_NORMAL)
 
 
 def preview_object(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
-    print(
-        f"Distance to object is located at ({obj.x}m, {obj.y}m, {obj.z}m), {obj.distance}m far away.")
+    # print(f"Distance to object is located at ({obj.x}m, {obj.y}m, {obj.z}m), {obj.distance}m far away.")
+    text_pos_x = 0 if obj.img_r > obj.img_x else obj.img_x - obj.img_r
+    text_pos_y = 0 if obj.img_r + 20 > obj.img_y else obj.img_y - obj.img_r - 20
     img = cv.putText(
-        img, f"({obj.x}m, {obj.y}m, {obj.z}m) ({obj.distance}m)", (obj.img_x -
-                                                                   obj.img_r, obj.img_y - obj.img_r - 20),
+        img, f"({obj.x}m, {obj.y}m, {obj.z}m) ({obj.distance}m)", (text_pos_x, text_pos_y),
         cv.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv.LINE_AA)
 
     # Markup outer circle and center
     cv.circle(img, (obj.img_x, obj.img_y), obj.img_r, (0, 255, 0), 2)
-    # cv.circle(img, (obj.img_x, obj.img_y), obj.img_r, (0, 0, 255), 3)
+    cv.circle(img, (obj.img_x, obj.img_y), 2, (0, 0, 255), 3)
     cv.imshow(WINDOW_PREVIEW_OBJECT, img)
     cv.resizeWindow(WINDOW_PREVIEW_OBJECT, *OPENCV_WINDOW_DIMENSIONS)
 
 
 def save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
     id = uuid.uuid4()
-    with open("measurements.csv", "a") as f:
-        f.write(f"{obj.x},{obj.y},{obj.z},{obj.distance},0,{id}\n")
+    fieldnames = ["x", "y", "z", "value", "id"]
+    if not os.path.exists(MEASUREMENTS_CSV):
+        with open(MEASUREMENTS_CSV, "a") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+    with open(MEASUREMENTS_CSV, "a") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writerow(
+            {"x": obj.x, "y": obj.y, "z": obj.z, "value": 0, "id": id})
     img_name = f"x{obj.x}y{obj.y}z{obj.z}-{id}.png"
-    path = os.path.join("measurements", img_name)
-    cv.imwrite(path, img)
+    Path(MEASUREMENTS_IMAGES).mkdir(parents=True, exist_ok=True)
+    path = os.path.join(MEASUREMENTS_IMAGES, img_name)
+    if not cv.imwrite(path, img):
+        print(
+            f"There was an issue saving the image for measurement {id}. Make sure the {MEASUREMENTS_IMAGES} directory exists.")
+    print(f"Sucessfully saved measurement {id}.")
 
 
 def preview_verify_and_save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
     preview_object(img, obj)
 
-    print('Press "s" to save and "d" to discard.')
     while True:
         k = cv.waitKey(100)
         if k == 115:  # "s" for save
@@ -129,6 +175,7 @@ def preview_verify_and_save_measurement(img: cv.typing.MatLike, obj: ReferenceOb
 WINDOW_LIVE_FEED = "live feed"
 cv.namedWindow(WINDOW_LIVE_FEED, cv.WINDOW_NORMAL)
 if __name__ == "__main__":
+    print('Press "s" to save and "d" to discard images in preview and verify mode.')
     if len(sys.argv) <= 1:
         while True:
             img = capture_image()
@@ -148,17 +195,3 @@ if __name__ == "__main__":
                 save_measurement(img, obj)
             else:
                 preview_verify_and_save_measurement(img, obj)
-
-
-# Math:
-# Focal_Length = (Pixels x Distance) / Width = (230px * 1m) / 0.25m = 920px  | /Pixels; *Width
-# Distance(p) = (Focal_Length * Width) / Pixels = (920px * 0.25m) / p = 230px*m / p
-# Distance(200) = 230px*m / 200px = 1,15m; Real: 1,20m
-# Distance(86) = 230px*m / 86px = 2,67m; Real: 2,70m
-# Distance(66) = 230px*m / 66px = 3,48m
-# Distance(98) = 230/98 = 2,34m; Real: 2,29m
-
-# Distance from center of frame
-# a^2 + b^2 = c^2
-# AK^2 + GK^2 = HP^2  | -AK^2
-# GK^2 = HP^2 - AK^2  | 

@@ -72,7 +72,7 @@ def show_plot_2d(
     The function will automatically adapt to display the values correctly.
     """
     # graph
-    x_vals, y_vals, z_vals, values = zip(*dataset)
+    x_vals, y_vals, z_vals, values, _ids = zip(*dataset)
     # default: flatten floor to ceiling
     xy2d = [x_vals, z_vals]
     if ignore_axis == "x":
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     else:
         if (len(sys.argv) > 2 and sys.argv[2] == "2d"):
             show_plot_2d(dataset.read_csv(
-                sys.argv[1]), *[float(x) for x in sys.argv[3:6]])
+                sys.argv[1]), *[float(x) for x in sys.argv[3:5]], sys.argv[5])
         else:
             show_plot_3d(dataset.read_csv(
                 sys.argv[1]), *[float(x) for x in sys.argv[3:5]])

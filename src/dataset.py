@@ -10,6 +10,7 @@ Each vector is made up of the following:
 - y [m] (floor to ceiling from observer),
 - z [m] (near to far from observer),
 - value (measurement, e.g. intensity of light; used to compare points or color them in visualizations)
+- (optional) id [uuid] of measurement
 """
 
 import sys
@@ -17,10 +18,11 @@ import csv
 import random
 import math
 from typing import *
+import uuid
 import dataset
 
 VECTOR_TYPE = Tuple[float, float, float]
-MEASUREMENT_TYPE = Tuple[float, float, float, float]
+MEASUREMENT_TYPE = Tuple[float, float, float, float, str]
 DATASET_TYPE = List[MEASUREMENT_TYPE]
 
 
@@ -36,7 +38,8 @@ def read_csv(path: str) -> DATASET_TYPE:
                 float(row["x"]),
                 float(row["y"]),
                 float(row["z"]),
-                float(row["value"])
+                float(row["value"]),
+                str(row["id"])
             ))
     return dataset
 
@@ -46,11 +49,11 @@ def write_csv(path: str, dataset: DATASET_TYPE):
     Writes a `dataset` to a file at a given `path`.
     """
     with open(path, "w") as csvfile:
-        fieldnames = ["x", "y", "z", "value"]
+        fieldnames = ["x", "y", "z", "value", "id"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for x, y, z, value in dataset:
-            writer.writerow({"x": x, "y": y, "z": z, "value": value})
+        for x, y, z, value, id in dataset:
+            writer.writerow({"x": x, "y": y, "z": z, "value": value, "id": id})
 
 
 def __distance(a: VECTOR_TYPE, b: VECTOR_TYPE) -> float:
@@ -77,7 +80,7 @@ def generate_random_dataset(
     area_depth: float = DEFAULT_AREA_DEPTH,
     measurement_count: int = DEFAULT_MEASUREMENT_COUNT,
     emitter_count: int = DEFAULT_EMITTER_COUNT,
-    value_function = lambda d: d
+    value_function=lambda d: d
 ) -> DATASET_TYPE:
     """
     Generates a random dataset with `measurement_count` data points and `emitter_count` emitter
@@ -90,6 +93,7 @@ def generate_random_dataset(
                   area_height for _ in range(measurement_count))
     z_vals = list(random.random() *
                   area_depth for _ in range(measurement_count))
+    ids = list(uuid.uuid4() for _ in range(measurement_count))
 
     random.shuffle(x_vals)
     random.shuffle(y_vals)
@@ -98,9 +102,10 @@ def generate_random_dataset(
     vectors = zip(x_vals, y_vals, z_vals)
     emitters = [(random.random() * area_width, random.random() * area_height,
                  random.random() * area_depth) for _ in range(emitter_count)]
-    values = list(value_function(min(__distance(v, emitter) for emitter in emitters)) for v in vectors)
+    values = list(value_function(min(__distance(v, emitter)
+                  for emitter in emitters)) for v in vectors)
 
-    return list(zip(x_vals, y_vals, z_vals, values))
+    return list(zip(x_vals, y_vals, z_vals, values, ids))
 
 
 DEFAULT_WRITE_LOCATION = "test-dataset.csv"

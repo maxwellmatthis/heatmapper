@@ -26,7 +26,7 @@ def show_plot_3d(
     The function will automatically adapt to display the values correctly. 
     """
     # graph
-    x_vals, y_vals, z_vals, values = zip(*dataset)
+    x_vals, y_vals, z_vals, values, _ids = zip(*dataset)
     fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(projection='3d')
 
@@ -115,16 +115,12 @@ def print_usage():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print_usage()
     else:
-        if (sys.argv[2] == "2d"):
+        if (len(sys.argv) > 2 and sys.argv[2] == "2d"):
             show_plot_2d(dataset.read_csv(
                 sys.argv[1]), *[float(x) for x in sys.argv[3:6]])
-        elif sys.argv[2] == "3d":
+        else:
             show_plot_3d(dataset.read_csv(
                 sys.argv[1]), *[float(x) for x in sys.argv[3:5]])
-        else:
-            print(
-                f"The third argument \"{sys.argv[2]}\" must be one of: \"3d\", \"2d\"")
-            print_usage()

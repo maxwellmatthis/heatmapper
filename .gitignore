@@ -161,3 +161,6 @@ cython_debug/
 
 # CSV files produced by running the progam
 *.csv
+
+# MacOS
+.DS_Store

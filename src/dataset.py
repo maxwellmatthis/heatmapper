@@ -6,14 +6,15 @@
 Datasets are represented as an array of four-dimensional vectors.
 Each vector is made up of the following:
 
-- x [m] (left to right from observer),
-- y [m] (floor to ceiling from observer),
-- z [m] (near to far from observer),
+- x [m] (near to far from observer),
+- y [m] (left to right from observer),
+- z [m] (floor to ceiling from observer),
 - value (measurement, e.g. intensity of light; used to compare points or color them in visualizations)
 - (optional) id [uuid] of measurement
 """
 
 import sys
+import os
 import csv
 import random
 import math
@@ -24,6 +25,7 @@ import dataset
 VECTOR_TYPE = Tuple[float, float, float]
 MEASUREMENT_TYPE = Tuple[float, float, float, float, str]
 DATASET_TYPE = List[MEASUREMENT_TYPE]
+FIELDNAMES = ["x", "y", "z", "value", "id"]
 
 
 def read_csv(path: str) -> DATASET_TYPE:
@@ -49,11 +51,21 @@ def write_csv(path: str, dataset: DATASET_TYPE):
     Writes a `dataset` to a file at a given `path`.
     """
     with open(path, "w") as csvfile:
-        fieldnames = ["x", "y", "z", "value", "id"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
         writer.writeheader()
         for x, y, z, value, id in dataset:
             writer.writerow({"x": x, "y": y, "z": z, "value": value, "id": id})
+
+
+def append_csv(path: str, x: float, y: float, z: float, value: float):
+    id = uuid.uuid4()
+    if not os.path.exists(path):
+        with open(path, "a") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+            writer.writeheader()
+    with open(path, "a") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
+        writer.writerow({"x": x, "y": y, "z": z, "value": value, "id": id})
 
 
 def __distance(a: VECTOR_TYPE, b: VECTOR_TYPE) -> float:

@@ -51,6 +51,16 @@ From the command line:
 ./src/dataset.py [path/of/new-random-dataset.csv, default=test-dataset.csv] [area-width, default=100.0] [area-height, default=100.0] [area-width, default=100.0] [measurement-count, default=1000] [emitter-count, default=2]
 ```
 
-## Usage Examples
+### Getting relative positions using the object tracker
 
-See [src/dataset.test.py](src/dataset.test.py) and [src/visualize.test.py](src/visualize.test.py).
+Just run the script. To set the program up for your own camera, tweak the global constants at the beginning of the script.
+
+### Semi-manually create a CSV with values
+
+```sh
+./src/manually_record_dataset.py <x_max> <y_max> <z_max>
+```
+
+## Examples
+
+See [src/dataset.test.py](src/dataset.test.py) and [src/visualize.test.py](src/visualize.test.py) for some examples of how to use the helpers.

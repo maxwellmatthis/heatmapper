@@ -9,8 +9,7 @@ import sys
 import os
 import math
 from pathlib import Path
-import csv
-import uuid
+import dataset
 import numpy as np
 import cv2 as cv
 
@@ -75,7 +74,7 @@ def find_circles(img) -> np.uint16 | None:
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = cv.GaussianBlur(gray, (5, 5), 0)
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1,
-                              20, param1=40, param2=2*40, minRadius=0, maxRadius=0)
+                              20, param1=35, param2=2*35, minRadius=30, maxRadius=600)
     if circles is None:
         return None
     return np.uint16(np.around(circles))
@@ -104,6 +103,8 @@ def find_reference_object(img) -> ReferenceObjectPosition | None:
             best_x = x
             best_y = y
             best_r = r
+        # debug
+        cv.circle(img, (x, y), r, (255, 0, 0), 1)
     # TODO: fill in correct x, y, and z coordinates
     distance = math.floor(
         distance_to_reference_object_meters(2*best_r) * 100) / 100
@@ -135,22 +136,13 @@ def preview_object(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
 
     # Markup outer circle and center
     cv.circle(img, (obj.img_x, obj.img_y), obj.img_r, (0, 255, 0), 2)
-    cv.circle(img, (obj.img_x, obj.img_y), 2, (0, 0, 255), 3)
+    cv.circle(img, (obj.img_x, obj.img_y), 2, (0, 0, 255), 2)
     cv.imshow(WINDOW_PREVIEW_OBJECT, img)
     cv.resizeWindow(WINDOW_PREVIEW_OBJECT, *OPENCV_WINDOW_DIMENSIONS)
 
 
 def save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
-    id = uuid.uuid4()
-    fieldnames = ["x", "y", "z", "value", "id"]
-    if not os.path.exists(MEASUREMENTS_CSV):
-        with open(MEASUREMENTS_CSV, "a") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-    with open(MEASUREMENTS_CSV, "a") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writerow(
-            {"x": obj.x, "y": obj.y, "z": obj.z, "value": 0, "id": id})
+    dataset.append_csv(MEASUREMENTS_CSV, obj.x, obj.y, obj.z, 0)
     img_name = f"x{obj.x}y{obj.y}z{obj.z}-{id}.png"
     Path(MEASUREMENTS_IMAGES).mkdir(parents=True, exist_ok=True)
     path = os.path.join(MEASUREMENTS_IMAGES, img_name)
@@ -173,10 +165,10 @@ def preview_verify_and_save_measurement(img: cv.typing.MatLike, obj: ReferenceOb
 
 
 WINDOW_LIVE_FEED = "live feed"
-cv.namedWindow(WINDOW_LIVE_FEED, cv.WINDOW_NORMAL)
 if __name__ == "__main__":
     print('Press "s" to save and "d" to discard images in preview and verify mode.')
     if len(sys.argv) <= 1:
+        cv.namedWindow(WINDOW_LIVE_FEED, cv.WINDOW_NORMAL)
         while True:
             img = capture_image()
             cv.imshow(WINDOW_LIVE_FEED, img)
@@ -192,6 +184,7 @@ if __name__ == "__main__":
             print("Unable to detect object.")
         else:
             if len(sys.argv) > 1 and sys.argv[2] == "--no-verify":
+                print("here!")
                 save_measurement(img, obj)
             else:
                 preview_verify_and_save_measurement(img, obj)

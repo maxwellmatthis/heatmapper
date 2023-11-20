@@ -3,8 +3,29 @@
 import sys
 import dataset
 import uuid
+import os
+import subprocess
 
 CSV_FILE = f"{uuid.uuid4()}.csv"
+
+
+def get_signal_strength(ssid: str):
+    """
+    Windows
+    """
+    rows = str.split(subprocess.check_output("lswifi").decode("utf-8"), "\n")
+    significant_rows = rows[3:]
+    strongest = -1000
+    for row in significant_rows:
+        stripped = row.strip()
+        split = str.split(stripped, " ")
+        filtered = filter(lambda x : x != "", split)
+        row_data = tuple(filtered)
+        if (len(row_data) == 11) and (row_data[0] == ssid):
+            dBm = int(row_data[2])
+            if strongest < dBm:
+                strongest = dBm
+    return strongest
 
 class ManRecorder():
     x: float = 0
@@ -23,7 +44,8 @@ class ManRecorder():
         print("Enter \"s\" to skip to next column.")
         print("(near-far, left-right, floor-ceiling)")
         while True:
-            value = input(f"({self.x}, {self.y}, {self.z}) = ")
+            print(f"({self.x}, {self.y}, {self.z}) = ", end="")
+            value = get_signal_strength("")
             if value == "s":
                 self.next_column()
                 continue
@@ -53,6 +75,8 @@ class ManRecorder():
         return True
 
 if __name__ == "__main__":
+    print(get_signal_strength("Alstergym_WIFI"))
+    sys.exit()
     if len(sys.argv) < 4:
         raise "Not enough arguments. You must provide x_max, y_max and z_max"
     mr = ManRecorder(*(int(x) for x in sys.argv[1:4]))

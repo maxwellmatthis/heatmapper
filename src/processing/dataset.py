@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 """
 # Dataset Format
 
@@ -20,7 +19,6 @@ import random
 import math
 from typing import *
 import uuid
-import dataset
 
 VECTOR_TYPE = Tuple[float, float, float]
 MEASUREMENT_TYPE = Tuple[float, float, float, float, str]
@@ -57,7 +55,7 @@ def write_csv(path: str, dataset: DATASET_TYPE):
             writer.writerow({"x": x, "y": y, "z": z, "value": value, "id": id})
 
 
-def append_csv(path: str, x: float, y: float, z: float, value: float):
+def append_csv(path: str, x: float, y: float, z: float, value: float) -> str:
     id = uuid.uuid4()
     if not os.path.exists(path):
         with open(path, "a") as f:
@@ -66,6 +64,7 @@ def append_csv(path: str, x: float, y: float, z: float, value: float):
     with open(path, "a") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
         writer.writerow({"x": x, "y": y, "z": z, "value": value, "id": id})
+    return id
 
 
 def __distance(a: VECTOR_TYPE, b: VECTOR_TYPE) -> float:
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2 and (sys.argv[1] == "help" or sys.argv[1] == "-h"):
         print_usage()
     else:
-        dataset.write_csv(
-            sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_WRITE_LOCATION,
-            dataset.generate_random_dataset(*sys.argv[2:7])
+        write_csv(sys.argv[1] if len(
+            sys.argv) >= 2 else DEFAULT_WRITE_LOCATION,
+            generate_random_dataset(*sys.argv[2:7])
         )

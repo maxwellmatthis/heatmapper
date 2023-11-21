@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-"""
-This script gets the relative position to the camera of an orange circle with a diameter of 25cm.
-"""
 
 from dataclasses import dataclass
 from typing import *
@@ -9,7 +6,7 @@ import sys
 import os
 import math
 from pathlib import Path
-import dataset
+from processing import dataset
 import numpy as np
 import cv2 as cv
 
@@ -45,9 +42,6 @@ CAMERA_HORIZONTAL_PIXELS = 1280
 def horizontal_angle_to_reference_object_rad(x_pixel: int):
     return ((x_pixel - CAMERA_HORIZONTAL_PIXELS / 2) / CAMERA_HORIZONTAL_PIXELS * 2) * CAMERA_HORIZONTAL_FIELD_OF_VIEW_RAD / 2
 
-# 0px => -1 | x / (0px - x) = -1
-# CAMERA_HORIZONTAL_PIXELS / 2 => 0 | x / (CAMERA_HORIZONTAL_PIXELS / 2 - x) = 0
-# CAMERA_HORIZONTAL_PIXELS => 1
 
 CAMERA_VERTICAL_FIELD_OF_VIEW_RAD = 2
 CAMERA_VERTICAL_PIXELS = 720
@@ -105,7 +99,6 @@ def find_reference_object(img) -> ReferenceObjectPosition | None:
             best_r = r
         # debug
         cv.circle(img, (x, y), r, (255, 0, 0), 1)
-    # TODO: fill in correct x, y, and z coordinates
     distance = math.floor(
         distance_to_reference_object_meters(2*best_r) * 100) / 100
     alpha_x = horizontal_angle_to_reference_object_rad(best_x)
@@ -127,7 +120,6 @@ cv.namedWindow(WINDOW_PREVIEW_OBJECT, cv.WINDOW_NORMAL)
 
 
 def preview_object(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
-    # print(f"Distance to object is located at ({obj.x}m, {obj.y}m, {obj.z}m), {obj.distance}m far away.")
     text_pos_x = 0 if obj.img_r > obj.img_x else obj.img_x - obj.img_r
     text_pos_y = 0 if obj.img_r + 20 > obj.img_y else obj.img_y - obj.img_r - 20
     img = cv.putText(
@@ -142,14 +134,14 @@ def preview_object(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
 
 
 def save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
-    dataset.append_csv(MEASUREMENTS_CSV, obj.x, obj.y, obj.z, 0)
-    img_name = f"x{obj.x}y{obj.y}z{obj.z}-{id}.png"
+    uuid = dataset.append_csv(MEASUREMENTS_CSV, obj.x, obj.y, obj.z, 0)
+    img_name = f"x{obj.x}y{obj.y}z{obj.z}-{uuid}.png"
     Path(MEASUREMENTS_IMAGES).mkdir(parents=True, exist_ok=True)
     path = os.path.join(MEASUREMENTS_IMAGES, img_name)
     if not cv.imwrite(path, img):
         print(
-            f"There was an issue saving the image for measurement {id}. Make sure the {MEASUREMENTS_IMAGES} directory exists.")
-    print(f"Sucessfully saved measurement {id}.")
+            f"There was an issue saving the image for measurement {uuid}. Make sure the {MEASUREMENTS_IMAGES} directory exists.")
+    print(f"Successfully saved measurement position {uuid}.")
 
 
 def preview_verify_and_save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):

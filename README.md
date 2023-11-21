@@ -60,6 +60,8 @@ From the command line:
 python3 ./processing/visualize.py <path/to/dataset.csv> ["3d" | "2d", default="3d"] [(2d-only) axis, options="x", "y", "z", default="z"] [best-possible-value, default=1.0] [worst-possible-value, default=0.0]
 ```
 
+<img width="712" alt="Screenshot 2023-11-21 at 9 30 36 PM" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/4363b28a-371f-4018-add9-9660f1f83809">
+
 ## Recording Measurements by Manually Measuring a 3d-Grid
 
 Script: [grid_recorder.py](./src/grid_recorder.py)

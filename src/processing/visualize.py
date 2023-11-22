@@ -31,6 +31,7 @@ def makeScalarMap(
 
 
 def show_plot_3d(
+    name: str,
     dataset: dataset.DATASET_TYPE,
     best_possible_value: float = DEFAULT_BEST_POSSIBLE_VALUE,
     worst_possible_value: float = DEFAULT_WORST_POSSIBLE_VALUE
@@ -46,7 +47,7 @@ def show_plot_3d(
     """
     # graph
     x_vals, y_vals, z_vals, values, _ids = zip(*dataset)
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(6, 6), num=name)
     ax = fig.add_subplot(projection='3d')
 
     # display
@@ -59,6 +60,7 @@ DEFAULT_FLATTENING_AXIS = "z"
 
 
 def show_plot_2d(
+    name: str,
     dataset: dataset.DATASET_TYPE,
     ignore_axis: str = DEFAULT_FLATTENING_AXIS,
     best_possible_value: float = DEFAULT_BEST_POSSIBLE_VALUE,
@@ -77,6 +79,7 @@ def show_plot_2d(
     The function will automatically adapt to display the values correctly.
     """
     # graph
+    plt.figure(num=name)
     x_vals, y_vals, z_vals, values, _ids = zip(*dataset)
     # default: flatten z
     xy2d = [x_vals, y_vals]
@@ -116,6 +119,8 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print_usage()
     else:
+        filename = sys.argv[1]
+        ds = dataset.read_csv(sys.argv[1])
         if (len(sys.argv) >= 3 and sys.argv[2] == "2d"):
             hasFourthArg = len(sys.argv) >= 4
             if hasFourthArg and represents_float(sys.argv[3]):
@@ -123,8 +128,8 @@ if __name__ == "__main__":
                     "Error: Please provide an axis before providing any more optional values.")
                 print_usage()
             else:
-                show_plot_2d(dataset.read_csv(
-                    sys.argv[1]), sys.argv[3] if hasFourthArg else DEFAULT_FLATTENING_AXIS, *[float(x) for x in sys.argv[4:6]])
+                show_plot_2d(f"2D Plot of \"{filename}\"", ds, sys.argv[3] if hasFourthArg else DEFAULT_FLATTENING_AXIS, *[
+                             float(x) for x in sys.argv[4:6]])
         else:
-            show_plot_3d(dataset.read_csv(
-                sys.argv[1]), *[float(x) for x in sys.argv[3:5]])
+            show_plot_3d(f"3D Plot of \"{filename}\"",
+                         ds, *[float(x) for x in sys.argv[3:5]])

@@ -2,15 +2,33 @@
 import subprocess
 from instruments.instrument import Instrument
 from sys import platform
+import re
+import os
 
+def is_running_as_root() -> bool:
+    return os.geteuid() == 0
 
 class WifiInstrument(Instrument):
     def __init__(self, ssid: str):
         self.ssid = ssid
 
     def get_signal_strength_linux(self) -> float:
-        # todo
-        return 0.0
+        if not is_running_as_root():
+            print("WARNING: YOU MUST BE ROOT TO INTIATE A NETWORK SCAN. OTHERWISE THE INFORMATION WILL BE FROM THE LAST AUTOMATIC SCAN, WHICH COULD BE MINUTES AGO.")
+        rows = subprocess.run([f"iwlist", "wlan0", "scanning"], check=True, capture_output=True, text=True).stdout
+        rows = str.split(rows, "\n")
+        rows = list(filter(lambda x : "SSID" in x or "Signal" in x, rows))
+        strongest = -1000
+        for pair_index in range(int(len(rows) / 2)):
+            signal_line = rows[2 * pair_index].strip()
+            rssi = re.search("-\d+", signal_line).group()
+            rssi = float(rssi)
+            ssid_line = rows[2 * pair_index + 1].strip()
+            ssid = re.sub("ESSID:\"", "", ssid_line)[:-1]
+            if ssid == self.ssid:
+                if strongest < rssi:
+                    strongest = rssi
+        return float(strongest)
 
     def get_signal_strength_macos(self) -> float:
         rows = subprocess.run(["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-s", self.ssid], check=True, capture_output=True, text=True).stdout

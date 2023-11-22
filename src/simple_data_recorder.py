@@ -18,7 +18,7 @@ if __name__ == "__main__":
         if mode == "time":
             time.sleep(1)
         else:
-            input()
+            input("Waiting for <enter> to take next measurement.")
         value = INSTRUMENT.measure()
         dataset.append_csv(filepath, 0, 0, 0, value)
         print(value)

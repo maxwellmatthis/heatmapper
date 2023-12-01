@@ -6,13 +6,12 @@ import sys
 import os
 import math
 from pathlib import Path
-from processing import dataset
 import numpy as np
 import cv2 as cv
 
 OPENCV_WINDOW_DIMENSIONS = (math.floor(16/9 * 400), 400)
-MEASUREMENTS_CSV = "measurements.csv"
-MEASUREMENTS_IMAGES = "measurements"
+POSITIONS_CSV = "positions.csv"
+POSITIONS_IMAGES = "positions"
 
 REFERENCE_OBJECT_CALIBRATION_DISTANCE = 1
 REFERENCE_OBJECT_CALIBRATION_DIAMETER_PIXELS = 230
@@ -133,24 +132,25 @@ def preview_object(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
     cv.resizeWindow(WINDOW_PREVIEW_OBJECT, *OPENCV_WINDOW_DIMENSIONS)
 
 
-def save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
-    uuid = dataset.append_csv(MEASUREMENTS_CSV, obj.x, obj.y, obj.z, 0)
+def save_position(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
+    with open(POSITIONS_CSV, "a") as f:
+        uuid = f.write(str(obj.x) + str(obj.y) + str(obj.z))
     img_name = f"x{obj.x}y{obj.y}z{obj.z}-{uuid}.png"
-    Path(MEASUREMENTS_IMAGES).mkdir(parents=True, exist_ok=True)
-    path = os.path.join(MEASUREMENTS_IMAGES, img_name)
+    Path(POSITIONS_IMAGES).mkdir(parents=True, exist_ok=True)
+    path = os.path.join(POSITIONS_IMAGES, img_name)
     if not cv.imwrite(path, img):
         print(
-            f"There was an issue saving the image for measurement {uuid}. Make sure the {MEASUREMENTS_IMAGES} directory exists.")
-    print(f"Successfully saved measurement position {uuid}.")
+            f"There was an issue saving the image for position {uuid}. Make sure the {POSITIONS_IMAGES} directory exists.")
+    print(f"Successfully saved position {uuid}.")
 
 
-def preview_verify_and_save_measurement(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
+def preview_verify_and_save_position(img: cv.typing.MatLike, obj: ReferenceObjectPosition):
     preview_object(img, obj)
 
     while True:
         k = cv.waitKey(100)
         if k == 115:  # "s" for save
-            save_measurement(img, obj)
+            save_position(img, obj)
             break
         elif k == 100:  # "d" for discard
             break
@@ -168,7 +168,7 @@ if __name__ == "__main__":
             cv.waitKey(10)
             obj = find_reference_object(img)
             if obj is not None:
-                preview_verify_and_save_measurement(img, obj)
+                preview_verify_and_save_position(img, obj)
     else:
         img = cv.imread(sys.argv[1])
         obj = find_reference_object(img)
@@ -177,6 +177,6 @@ if __name__ == "__main__":
         else:
             if len(sys.argv) > 1 and sys.argv[2] == "--no-verify":
                 print("here!")
-                save_measurement(img, obj)
+                save_position(img, obj)
             else:
-                preview_verify_and_save_measurement(img, obj)
+                preview_verify_and_save_position(img, obj)

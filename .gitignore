@@ -14,7 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -159,11 +158,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# CSV files produced by running the progam
-*.csv
-
 # MacOS
 .DS_Store
 
 # measurements
 measurements/
+*.csv
+*.json

@@ -89,18 +89,23 @@ Values = Dict[str, Value]
 
 @dataclass
 class Measurement:
+    id: str
     coordinates: Coordinates
     values: Values
     note: Optional[str]
 
+    def new(coordinates: Coordinates, values: Values, note: Optional[str]) -> Self:
+        return Measurement(str(uuid.uuid4()), coordinates, values, note)
+
     def from_dict(d: dict) -> Self:
+        id = d["id"]
         coordinates = Coordinates.from_dict(d["coordinates"])
         values = dict((k, Value.from_dict(v)) for k, v in d["values"].items())
         note = d["note"]
-        return Measurement(coordinates, values, note)
+        return Measurement(id, coordinates, values, note)
 
 
-Measurements = Dict[str, Measurement]
+Measurements = List[Measurement]
 
 
 class MergeFunction:
@@ -115,12 +120,9 @@ MergedMeasurementTableRow = Tuple[str, float, float, float, float]
 
 @dataclass
 class MergedMeasurementTable:
-    rows: MergedMeasurementTableRow
+    filter_expression: str
     value_type: ValueType
-
-    def __init__(self, value_type: ValueType, rows: List[MergedMeasurementTableRow]):
-        self.rows = rows
-        self.value_type = value_type
+    rows: List[MergedMeasurementTableRow]
 
     def csv(self) -> str:
         return "\n".join([
@@ -145,7 +147,7 @@ class Instrument():
         self.meta = meta
         self.value_types = dict((value_type.name, value_type)
                                 for value_type in value_types)
-        self.measurements = {}
+        self.measurements = []
         self.do_measure_function = do_measure_function
 
     def from_dict(d: dict) -> Self:
@@ -157,18 +159,22 @@ class Instrument():
             lambda: print(
                 "You'll need to overwrite the `do_measure_function` to measure new values because the measurement function cannot be stored as JSON.")
         )
-        i.measurements = dict((k, Measurement.from_dict(v))
-                              for k, v in d["measurements"].items())
+        i.measurements = list((Measurement.from_dict(v))
+                              for v in d["measurements"])
         return i
 
     def get_value_type(self, name: str) -> ValueType:
         return self.value_types[name]
 
-    def take_measurement(self, coordinates: Coordinates, note: str = None, *args) -> Measurement:
-        measurement = Measurement(
-            coordinates, self.do_measure_function(*args), note)
-        self.measurements[str(uuid.uuid4())] = measurement
-        return measurement
+    def take_measurement(self, coordinates: Coordinates, note: str = None, *args) -> Optional[Measurement]:
+        try:
+            measurement = Measurement.new(
+                coordinates, self.do_measure_function(*args), note)
+            self.measurements.append(measurement)
+            return measurement
+        except Exception as e:
+            print(e)
+
 
     def __merge_columns(self, columns: Dict[str, Value], merger) -> float:
         saved_value: float = None
@@ -185,14 +191,14 @@ class Instrument():
 
     def measurements_as_table(
         self,
-        column_name_match_regex: str = ".",
+        filter_expression: str = ".",
         merger=MergeFunction.greater
     ) -> MergedMeasurementTable:
-        pat = re.compile(column_name_match_regex)
+        pat = re.compile(filter_expression)
         rows = []
         none_matched = True
         value_type_name = None
-        for id, measurement in self.measurements.items():
+        for measurement in self.measurements:
             matching_columns = list(
                 filter((lambda k_v: pat.search(k_v[0]) is not None), measurement.values.items()))
             if len(matching_columns) >= 1:
@@ -202,14 +208,14 @@ class Instrument():
                     value_type_name = first_row[1].type
                 # todo: maybe add a warning if too many values are excluded?
                 commonly_typed_columns = list(filter(
-                    (lambda k_v: k_v[1].type == value_type_name), measurement.values.items()))
+                    (lambda k_v: k_v[1].type == value_type_name), matching_columns))
                 none_matched = False
                 c = measurement.coordinates
                 rows.append(
-                    [id, c.x, c.y, c.z, self.__merge_columns(commonly_typed_columns, merger)])
+                    [measurement.id, c.x, c.y, c.z, self.__merge_columns(commonly_typed_columns, merger)])
         if none_matched:
             print("WARNING: No column matched your filter expression.")
-        return MergedMeasurementTable(self.get_value_type(value_type_name), rows)
+        return MergedMeasurementTable(filter_expression, self.get_value_type(value_type_name), rows)
 
 
 Instruments = Dict[str, Instrument]

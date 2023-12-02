@@ -4,7 +4,7 @@ from lib.instruments.wifi import WifiInstrument, NoScanDataException
 
 
 if __name__ == "__main__":
-    INS = WifiInstrument()
+    INS = WifiInstrument("wlan0")
     DS = Dataset("Simple WiFi Recording").add_instrument(INS)
     DS.enable_save_on_terminate()
 

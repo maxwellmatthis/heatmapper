@@ -64,7 +64,7 @@ def get_access_points_linux() -> Values:
 
         ap_identifier = f"SSID:{ssid};MAC:{address};FREQUENCY:{frequency};CHANNEL:{channel}"
 
-        APs[ap_identifier] = rssi
+        APs[ap_identifier] = Value(RSSI, rssi)
 
     return APs
 

@@ -7,6 +7,7 @@ import re
 from lib.dataset import Instrument, Value, Values, ValueType
 
 
+# RSSI = Received Signal Strength Indicator
 RSSI = ValueType("RSSI", "dBm", -30, -80)
 
 
@@ -73,14 +74,15 @@ def prepare_get_access_points_linux(interface: str):
 
 
 def prepare_get_access_points_macos(interface: str):
+    # TODO: migrate to new API and use interface?
     def get_access_points_macos() -> Values:
         cmd = ["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-s"]
         """
         # Example Command Output
         ```sh
                           SSID BSSID             RSSI CHANNEL HT CC SECURITY (auth/unicast/group)
-                My Network 123                   -88  36,+1   Y  -- RSN(802.1x/AES/AES)
-                 Other Network                   -75  1       Y  -- RSN(PSK/AES/AES)
+                My Network 123 ab:12:34:56:78:cd -88  36,+1   Y  -- RSN(802.1x/AES/AES)
+                 Other Network ef:cd:78:56:34:12 -75  1       Y  -- RSN(PSK/AES/AES)
         ```
         """
         rows = subprocess.run(
@@ -88,6 +90,7 @@ def prepare_get_access_points_macos(interface: str):
         if rows.strip() == "":
             raise NoScanDataException
         rows = str.split(rows, "\n")
+        rows = [row for row in rows if row.strip() != ""]
         if len(rows) < 2:
             raise NoScanDataException
 
@@ -104,8 +107,8 @@ def prepare_get_access_points_macos(interface: str):
             bssid = row[start_of_bssid_column:start_of_rssi_column].strip()
             channel = row[start_of_channel_column:start_of_ht_column].strip()
             security = row[start_of_security_column:].strip()
-            ap_identifier = f"SSID:{ssid};" + f"MAC:{bssid};" if posix_is_root(
-            ) else "" + f"CHANNEL:{channel};SECURITY:{security}"
+            ap_identifier = f"SSID:{ssid};" + (f"MAC:{bssid};" if posix_is_root(
+            ) else "") + f"CHANNEL:{channel};SECURITY:{security}"
 
             rssi = row[start_of_rssi_column:start_of_rssi_column+4].strip()
 
@@ -114,7 +117,9 @@ def prepare_get_access_points_macos(interface: str):
         return APs
     return get_access_points_macos
 
+
 def prepare_get_access_points_windows(interface: str):
+    # TODO: update windows function for new format and check if interface can be parameterized
     def get_access_points_windows() -> Values:
         rows = str.split(subprocess.check_output(
             "lswifi").decode("utf-8"), "\n")

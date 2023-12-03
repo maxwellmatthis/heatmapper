@@ -13,7 +13,8 @@ show_plot_2d(table, Axis.X)
 show_plot_2d(table, Axis.Y)
 
 # The value function is based on Coulomb's law.
-ds2 = generate_random_dataset(1000, 3, (lambda d: (1 / d**2) * 1000, ValueType("coulombly scaled", "C?", 3.5, 0)))
+ds2 = generate_random_dataset(1000, 3, (lambda d: (
+    1 / d**2) * 1000, ValueType("coulombly scaled", "C?", 3.5, 0)))
 ds2.save()
 ins2 = ds2.get_instrument("random_data")
 

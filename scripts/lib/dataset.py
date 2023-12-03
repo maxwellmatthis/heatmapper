@@ -13,7 +13,6 @@ Each vector is made up of the following:
 """
 
 from dataclasses import dataclass
-import sys
 import signal
 import random
 import math
@@ -175,10 +174,9 @@ class Instrument():
         except Exception as e:
             print(e)
 
-
-    def __merge_columns(self, columns: Dict[str, Value], merger) -> float:
+    def __merge_values(self, values: Dict[str, Value], merger) -> float:
         saved_value: float = None
-        for _, value in columns:
+        for _, value in values:
             if saved_value is None:
                 saved_value = value.value
             else:
@@ -199,22 +197,22 @@ class Instrument():
         none_matched = True
         value_type_name = None
         for measurement in self.measurements:
-            matching_columns = list(
+            matching_values = list(
                 filter((lambda k_v: pat.search(k_v[0]) is not None), measurement.values.items()))
-            if len(matching_columns) >= 1:
-                # infer value data type from first matching column
+            if len(matching_values) >= 1:
+                # infer value data type from first matching value
                 if value_type_name is None:
-                    first_row = matching_columns[0]
+                    first_row = matching_values[0]
                     value_type_name = first_row[1].type
                 # todo: maybe add a warning if too many values are excluded?
-                commonly_typed_columns = list(filter(
-                    (lambda k_v: k_v[1].type == value_type_name), matching_columns))
+                commonly_typed_values = list(filter(
+                    (lambda k_v: k_v[1].type == value_type_name), matching_values))
                 none_matched = False
                 c = measurement.coordinates
                 rows.append(
-                    [measurement.id, c.x, c.y, c.z, self.__merge_columns(commonly_typed_columns, merger)])
+                    [measurement.id, c.x, c.y, c.z, self.__merge_values(commonly_typed_values, merger)])
         if none_matched:
-            print("WARNING: No column matched your filter expression.")
+            print("WARNING: No values matched your filter expression.")
         return MergedMeasurementTable(filter_expression, self.get_value_type(value_type_name), rows)
 
 

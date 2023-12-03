@@ -4,114 +4,113 @@ Software for recording, analyzing and visualizing data as three-dimensional heat
 
 ## Installation & Setup
 
-Make sure to run `python3 -m pip install -r requirements.txt` to install all necessary dependencies.
+1. Make sure to run `python3 -m pip install -r requirements.txt` to install all necessary
+dependencies.
 
-__Note:__ Some scripts require changing hard-coded constants or a bit of logic in
-the `if __name__ == "__main__"` part of the script. Check there if things are not working
-as expected or if you're missing a customization option in the CLI.
+2. Set the `PYTHONPATH` environment variable to the absolute location of the `scripts` directory.
+This step ensures that all the modules are available, even when you run a script not located in
+the `scripts` directory.
 
-## Working with Datasets
+__Tip:__ If you're looking to for more customization options, try tuning the global constants in
+the script you're dealing with. 
 
-Script: [dataset.py](./src/processing/dataset.py)
+## Usage (by Example)
 
-Directly from python code:
+### Taking Measurements
 
-```python
-import src.dataset as dat
-
-# read CSV
-dat.read_csv("/path/to/file.csv")
-
-# write CSV
-dat.write_csv("/path/to/file.csv", dataset)
-
-# append CSV entry
-entry_uuid = dat.append_csv("/path/to/file.csv", x, y, z, value)
-
-# generate random dataset
-dat.generate_random_dataset(area_width, area_height, area_depth, area_number_of_measurement_points, number_of_emitters)
-```
-
-From the command line:
-
-```sh
-python3 ./src/dataset.py [path/of/new-random-dataset.csv, default=test-dataset.csv] [area-width, default=100.0] [area-height, default=100.0] [area-width, default=100.0] [measurement-count, default=1000] [emitter-count, default=2]
-```
-
-## Visualizing Datasets
-
-Script: [visualize.py](./src/processing/visualize.py)
-
-Directly from python code:
+__Note:__ The following script assumes that measurements are made every meter in a straight line
+along the x-axis. This is likely not going to be how you measure WiFi in reality. If you are
+taking or took the measurements in a pattern of known dimensions, you could easily write a script
+that calculates or updates the coordinates. Automatically keeping track of arbitrary measurement
+points can get very complicated. Relatively reliable solutions include GPS, optical tracking and
+triangulation to known points.
 
 ```python
-import src.visualize as vis
+# from: scripts/simple_wifi_recorder.py
 
-# in 3D space
-vis.show_plot_3d(dataset, best_possible_value, worst_possible_value)
+from lib.dataset import Dataset, Coordinates
+from lib.instruments.wifi import WifiInstrument, NoScanDataException
 
-# flattened to 2D by ignoring one axis
-vis.show_plot_2d(dataset, "z", best_possible_value, worst_possible_value)
+
+if __name__ == "__main__":
+    INS = WifiInstrument("wlan0")
+    DS = Dataset("Simple WiFi Recording").add_instrument(INS)
+    DS.enable_save_on_terminate()
+
+    i = 0
+    while True:
+        note = input(
+            "Waiting for <enter> to take next measurement. Enter a note for the next measurement here: ")
+        try:
+            measurement = INS.take_measurement(Coordinates(i, 0, 0), note)
+            print(measurement)
+            i += 1
+        except NoScanDataException:
+            print("The scan command did not yield any output.")
 ```
 
-From the command line:
+### Visualizing Measurements
 
-```sh
-python3 ./processing/visualize.py <path/to/dataset.csv> ["3d" | "2d", default="3d"] [(2d-only) axis, options="x", "y", "z", default="z"] [best-possible-value, default=1.0] [worst-possible-value, default=0.0]
+```python
+# from: scripts/visualize_wifi_recording.py
+
+from lib.dataset import Dataset, MergeFunction
+from lib.visualize import show_plot_3d, show_plot_2d, Axis
+
+# load the "simple-wifi-recording.json" dataset
+filename = "simple-wifi-recording.json"
+# get the measurements related to the WiFi instrument
+instrument = Dataset.load(filename).get_instrument("WiFi")
+# filter values by value identifier (using regex) and supplying a function that decides
+# how to merge multiple values that both match the regex
+table = instrument.measurements_as_table("SSID:My Network", MergeFunction.greater)
+
+# print data as a csv (e.g., for use in Excel)
+print(table.csv())
+
+# 3d or 2d visualization using matplotlib
+show_plot_3d(table, filename)
+show_plot_2d(table, Axis.Z, filename)
 ```
 
 <img width="712" alt="Screenshot 2023-11-21 at 9 30 36 PM" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/4363b28a-371f-4018-add9-9660f1f83809">
 
-## Recording Measurements by Manually Measuring a 3d-Grid
+## Component Overview
 
-Script: [grid_recorder.py](./src/grid_recorder.py)
+### Measurements
 
-```sh
-python3 ./src/grid_recorder.py <path/to/output.csv> <x_max> <y_max> <z_max> <WiFi SSID>
-```
+Creating a spacial heat map requires having lots of datapoints or measurements.
 
-__About:__ This script helps take measurements in a space with the dimensions
-`x_max * y_max * z_max` by telling the user where to stand when
-the measurement is taken.
+Each measurement includes
 
-## Recording Measurements Independently of Position Data
+- a set of three-dimensional coordinates,
+- an ID,
+- an optional note about the measurement,
+- and a dictionary of values, consisting of a type and a numeric value.
 
-Script: [simple_data_recorder.py](./src/simple_data_recorder.py)
+### Instruments
 
-```sh
-python3 ./simple_data_recorder.py <"time" | "keypress"> <path/to/output.csv> <WiFi SSID>
-```
+Each type of measurement requires an "instrument", e.g., a thermometer or WiFi card.
+Each instrument requires a driving script that provides a custom implementation of
+`lib.dataset.Instrument` to help take and store measurements and metadata. 
 
-__About:__ This script takes a measurement every second or when the enter key
-is pressed, depending on the mode.
+The driving scripts are located in the [instruments directory](./scripts/lib/instruments/).
 
-__Tip:__ Use this script alongside a position recorder to supply position data
-for the recorded measurements.
-
-## Recording Position Data Using the Mono Optical Object Tracker
-
-Script: [mono_optical_position_recorder.py](./src/mono_optical_position_recorder.py)
-
-```sh
-python3 ./src/mono_optical_position_recorder.py
-```
-
-__About:__ This script helps take measurements by determining the position of the
-measurement by taking a picture and calculating the relative position
-of my orange pasta colander (or any orange circle with a diameter of 25cm).
-
-__Customizing:__ To set the program up to work with your own camera, tweak the
-global constants at the beginning of the script.
-
-__Tip:__ Use this script alongside a simple data recorder to supply measurement data
-for the recorded positions.
-
-## Measurement Instruments
-
-Each type of measurement requires an "instrument". The driving scripts for supported instruments are located in the [instruments folder](./src/instruments/).
-
-### Supported Instruments
+#### Supported Instruments
 
 | Name | Data Measured | Requirements |
 | ---- | ------------- | ------------ |
-| WiFi | WiFi signal strength by SSID in dBm | WiFi-capable computer running Windows, Linux or MacOS |
+| WiFi | WiFi signal strength by access point and channel in dBm | WiFi-capable computer running Windows, Linux or MacOS |
+
+### Datasets
+
+Datasets contain one or more instruments along with a bit of general metadata.
+The [dataset.py](./scripts/lib/dataset.py) script provides useful classes and methods for creating,
+saving, reading and understanding datasets and the instruments and measurements within.
+
+When run directly the script creates a test dataset:
+
+```sh
+python3 ./scripts/lib/dataset.py
+```
+

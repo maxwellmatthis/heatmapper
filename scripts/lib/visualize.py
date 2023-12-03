@@ -47,7 +47,7 @@ def show_plot_3d(
     _ids, x_vals, y_vals, z_vals, values = zip(*table.rows)
 
     # graph
-    fig = plt.figure() # figsize=(6, 6))
+    fig = plt.figure()
     fig.suptitle(figure_name("3D", name, table))
     ax = fig.add_subplot(projection='3d')
     ax.scatter(x_vals, y_vals, z_vals, c=makeScalarMap(
@@ -93,8 +93,8 @@ def show_plot_2d(
 
     # graph
     fig, ax = plt.subplots()
+    fig.suptitle(figure_name(f"2D ({ignore_axis} flattened)", name, table))
     ax.scatter(*xy2d, c=makeScalarMap(table.value_type).to_rgba(values))
-    ax.set_title(figure_name(f"2D ({ignore_axis} flattened)", name, table))
     ax.grid(True)
     ax.set_aspect('equal', adjustable='box')
     ax.set_xlabel("X (m)")

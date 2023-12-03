@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from typing import *
-from dataset import Dataset, Instrument, ValueType, Coordinates, Value, MergeFunction
+from lib.dataset import Dataset, Instrument, ValueType, Coordinates, Value, MergeFunction
 
 # Prepare and Save
 test_type = ValueType("test_type", "imaginary test unit", 100, 0)

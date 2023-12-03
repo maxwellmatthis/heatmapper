@@ -303,7 +303,7 @@ def generate_random_dataset(
     measurement_count: int = DEFAULT_MEASUREMENT_COUNT,
     emitter_count: int = DEFAULT_EMITTER_COUNT,
     value_function_and_output_type=(lambda d: d, ValueType(
-        "value_function_output", "m", 0, (AREA_DEPTH + AREA_HEIGHT + AREA_WIDTH) / 2))
+        "value_function_output", "m", 0, 0.9 * (AREA_DEPTH + AREA_HEIGHT + AREA_WIDTH) / 2))
 ) -> Dataset:
     """
     Generates a random dataset with `measurement_count` data points and `emitter_count` emitter

@@ -27,8 +27,11 @@ def makeScalarMap(value_type: ValueType):
     return scalarMap
 
 
-def window_name(dimension_type: str, name: Optional[str], table: MergedMeasurementTable):
-    f"{dimension_type} Plot of " + f"{table.value_type.name} in {table.value_type.unit}" if name is None else name
+def figure_name(dimension_type: str, name: Optional[str], table: MergedMeasurementTable):
+    return f"{dimension_type} Plot of \"" \
+       + (f"{table.value_type.name} in {table.value_type.unit}"
+          if name is None else name) \
+       + "\""
 
 
 def show_plot_3d(
@@ -41,14 +44,18 @@ def show_plot_3d(
     The points will be colored based on the best and worst possible values.
     Green is the best, yellow is medium, and red ist the worst.
     """
-    # graph
     _ids, x_vals, y_vals, z_vals, values = zip(*table.rows)
-    fig = plt.figure(figsize=(6, 6), num=window_name("3D", name, table))
-    ax = fig.add_subplot(projection='3d')
 
-    # display
+    # graph
+    fig = plt.figure() # figsize=(6, 6))
+    fig.suptitle(figure_name("3D", name, table))
+    ax = fig.add_subplot(projection='3d')
     ax.scatter(x_vals, y_vals, z_vals, c=makeScalarMap(
         table.value_type).to_rgba(values))
+    ax.set_aspect("equal")
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.set_zlabel("Z (m)")
     plt.show()
 
 
@@ -85,9 +92,11 @@ def show_plot_2d(
         xy2d = [x_vals, z_vals]
 
     # graph
-    plt.figure(num=window_name(f"2D ({ignore_axis} flattened)", name, table))
-    ax = plt.subplot()
-
-    # display
+    fig, ax = plt.subplots()
     ax.scatter(*xy2d, c=makeScalarMap(table.value_type).to_rgba(values))
+    ax.set_title(figure_name(f"2D ({ignore_axis} flattened)", name, table))
+    ax.grid(True)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
     plt.show()

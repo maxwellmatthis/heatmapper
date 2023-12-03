@@ -73,7 +73,7 @@ show_plot_3d(table, filename)
 show_plot_2d(table, Axis.Z, filename)
 ```
 
-<img width="712" alt="Screenshot 2023-11-21 at 9 30 36 PM" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/4363b28a-371f-4018-add9-9660f1f83809">
+![visualization-example](https://github.com/maxwellmatthis/heatmapper/assets/58150536/d1801348-14f4-4dd8-a316-2f6ec0936c3f)
 
 ## Component Overview
 

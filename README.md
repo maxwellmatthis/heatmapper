@@ -22,8 +22,8 @@ __Note:__ The following script assumes that measurements are made every meter in
 along the x-axis. This is likely not going to be how you measure WiFi in reality. If you are
 taking or took the measurements in a pattern of known dimensions, you could easily write a script
 that calculates or updates the coordinates. Automatically keeping track of arbitrary measurement
-points can get very complicated. Relatively reliable solutions include GPS, optical tracking and
-triangulation to known points.
+points can get very complicated. Relatively easy and reliable solutions include GPS and optical
+tracking.
 
 ```python
 # from: scripts/simple_wifi_recorder.py

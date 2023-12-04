@@ -111,6 +111,7 @@ def prepare_get_access_points_macos(interface: str):
             ) else "") + f"CHANNEL:{channel};SECURITY:{security}"
 
             rssi = row[start_of_rssi_column:start_of_rssi_column+4].strip()
+            rssi = float(rssi)
 
             APs[ap_identifier] = Value(RSSI, rssi)
 

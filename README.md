@@ -12,7 +12,7 @@ This step ensures that all the modules are available, even when you run a script
 the `scripts` directory.
 
 __Tip:__ If you're looking to for more customization options, try tuning the global constants in
-the script you're dealing with. 
+the script you're dealing with.
 
 ## Usage (by Example)
 
@@ -54,16 +54,17 @@ if __name__ == "__main__":
 ```python
 # from: scripts/visualize_wifi_recording.py
 
+import sys
 from lib.dataset import Dataset, MergeFunction
 from lib.visualize import show_plot_3d, show_plot_2d, Axis
 
-# load the "simple-wifi-recording.json" dataset
-filename = "simple-wifi-recording.json"
+# load the dataset at path (first command line argument)
+filename = sys.argv[1]
 # get the measurements related to the WiFi instrument
 instrument = Dataset.load(filename).get_instrument("WiFi")
 # filter values by value identifier (using regex) and supplying a function that decides
 # how to merge multiple values that both match the regex
-table = instrument.measurements_as_table("SSID:My Network", MergeFunction.greater)
+table = instrument.measurements_as_table(["."], MergeFunction.greater)
 
 # print data as a csv (e.g., for use in Excel)
 print(table.csv())
@@ -81,7 +82,7 @@ The following image shows what the 2D WiFi heat map of a small building could lo
 
 ### Measurements
 
-Creating a spacial heat map requires having lots of datapoints or measurements.
+Creating a spacial heat map requires having lots of data points or measurements.
 
 Each measurement includes
 
@@ -94,7 +95,7 @@ Each measurement includes
 
 Each type of measurement requires an "instrument", e.g., a thermometer or WiFi card.
 Each instrument requires a driving script that provides a custom implementation of
-`lib.dataset.Instrument` to help take and store measurements and metadata. 
+`lib.dataset.Instrument` to help take and store measurements and metadata.
 
 The driving scripts are located in the [instruments directory](./scripts/lib/instruments/).
 
@@ -115,4 +116,3 @@ When run directly the script creates a test dataset:
 ```sh
 python3 ./scripts/lib/dataset.py
 ```
-

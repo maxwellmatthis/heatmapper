@@ -108,10 +108,32 @@ Measurements = List[Measurement]
 
 
 class MergeFunction:
-    def greater(x: float, greatest: float) -> bool: return x > greatest
-    def lesser(x: float, least: float) -> bool: return x < least
+    def max(x: float, greatest: float | None, _all) -> bool:
+        if greatest is None or x > greatest:
+            return x
+        else:
+            return greatest
+
+    def min(x: float, least: float | None, _all) -> bool:
+        if least is None or x < least:
+            return x
+        else:
+            return least
+
     def accumulate(
-        x: float, accumulator: float) -> float: return float(x + accumulator)
+            x: float, accumulator: float | None, _all) -> float:
+        if accumulator is None:
+            return x
+        else:
+            return x + accumulator
+
+    def average(x: float, accumulator: float | None, all: [float]):
+        if accumulator is None:
+            accumulator = 0
+        return accumulator + x/len(all)
+
+    def static(val: float) -> Any:
+        return lambda _x, _val, _all: val
 
 
 MergedMeasurementTableRow = Tuple[str, float, float, float, float]
@@ -119,7 +141,7 @@ MergedMeasurementTableRow = Tuple[str, float, float, float, float]
 
 @dataclass
 class MergedMeasurementTable:
-    filter_expression: str
+    filter_expressions: [str]
     value_type: ValueType
     rows: List[MergedMeasurementTableRow]
 
@@ -174,37 +196,37 @@ class Instrument():
         except Exception as e:
             print(e)
 
-    def __merge_values(self, values: Dict[str, Value], merger) -> float:
+    def __merge_values(self, values_dict: Dict[str, Value], merger) -> float:
         saved_value: float = None
-        for _, value in values:
-            if saved_value is None:
-                saved_value = value.value
-            else:
-                merge_value = merger(value.value, saved_value)
-                if isinstance(merge_value, float):
-                    saved_value = merge_value
-                elif merge_value == True:
-                    saved_value = value.value
+        values = [v for _, v in values_dict]
+        for value in values:
+            saved_value = float(merger(value.value, saved_value, values))
         return saved_value
 
     def measurements_as_table(
         self,
-        filter_expression: str = ".",
-        merger=MergeFunction.greater
+        filter_expressions: [str] = ["."],
+        merger=MergeFunction.max
     ) -> MergedMeasurementTable:
-        pat = re.compile(filter_expression)
+        pats = [re.compile(fe) for fe in filter_expressions]
         rows = []
         none_matched = True
         value_type_name = None
+
+        def matches(k_v: Tuple[str, str]):
+            for p in pats:
+                if p.search(k_v[0]) is None:
+                    return False
+            return True
+
         for measurement in self.measurements:
             matching_values = list(
-                filter((lambda k_v: pat.search(k_v[0]) is not None), measurement.values.items()))
+                filter(matches, measurement.values.items()))
             if len(matching_values) >= 1:
                 # infer value data type from first matching value
                 if value_type_name is None:
                     first_row = matching_values[0]
                     value_type_name = first_row[1].type
-                # todo: maybe add a warning if too many values are excluded?
                 commonly_typed_values = list(filter(
                     (lambda k_v: k_v[1].type == value_type_name), matching_values))
                 none_matched = False
@@ -212,8 +234,8 @@ class Instrument():
                 rows.append(
                     [measurement.id, c.x, c.y, c.z, self.__merge_values(commonly_typed_values, merger)])
         if none_matched:
-            print("WARNING: No values matched your filter expression.")
-        return MergedMeasurementTable(filter_expression, self.get_value_type(value_type_name), rows)
+            raise Exception("ERROR: No values matched your filter expression.")
+        return MergedMeasurementTable(filter_expressions, self.get_value_type(value_type_name), rows)
 
 
 Instruments = Dict[str, Instrument]
@@ -256,7 +278,7 @@ class Dataset:
             return ds
 
     def make_safe_file_name(name: str):
-        return re.sub("\/| ", "-", str(name)).lower()[:30]
+        return re.sub("\/| ", "-", str(name)).lower()
 
     def save(self) -> str:
         """

@@ -8,7 +8,7 @@ from lib.dataset import Instrument, Value, Values, ValueType
 
 
 # RSSI = Received Signal Strength Indicator
-RSSI = ValueType("RSSI", "dBm", -30, -80)
+RSSI = ValueType("RSSI", "dBm", -20, -90)
 
 
 class NoScanDataException(Exception):

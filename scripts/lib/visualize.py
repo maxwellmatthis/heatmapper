@@ -28,10 +28,10 @@ def makeScalarMap(value_type: ValueType):
 
 
 def figure_name(dimension_type: str, name: Optional[str], table: MergedMeasurementTable):
-    return f"{dimension_type} Plot of \"" \
+    return f"{dimension_type} Plot of " \
         + (f"{table.value_type.name} in {table.value_type.unit}"
-           if name is None else name) \
-        + "\""
+           + f" filtered by \"{table.filter_expression}\""
+           if name is None else f"\"name\"")
 
 
 def show_plot_3d(

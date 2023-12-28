@@ -76,7 +76,7 @@ filename = sys.argv[1]
 instrument = Dataset.load(filename).get_instrument("WiFi")
 # filter values by value identifier (using regex) and supplying a function that decides
 # how to merge multiple values that both match the regex
-table = instrument.measurements_as_table(["."], MergeFunction.greater)
+table = instrument.measurements_as_table(["."], MergeFunction.max)
 
 # print data as a csv (e.g., for use in Excel)
 print(table.csv())

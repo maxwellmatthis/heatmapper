@@ -2,6 +2,18 @@
 
 Software for recording, analyzing and visualizing data as three-dimensional heat maps.
 
+## Table of Contents
+
+- [Installtion & Setup](#installation--setup)
+- [Usage (by Example)](#usage-by-example)
+    - [Taking Measurements](#taking-measurements)
+    - [Visualizing Measurements](#visualizing-measurements)
+- [Component Overview](#component-overview)
+    - [Measurements](#measurements)
+    - [Instruments](#instruments)
+        - [Supported Instruments](#supported-instruments)
+    - [Datasets](#datasets)
+
 ## Installation & Setup
 
 1. Make sure to run `python3 -m pip install -r requirements.txt` to install all necessary

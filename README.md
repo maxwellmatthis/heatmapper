@@ -4,7 +4,7 @@ Software for recording, analyzing and visualizing data as three-dimensional heat
 
 ## Table of Contents
 
-- [Installtion & Setup](#installation--setup)
+- [Installation & Setup](#installation--setup)
 - [Usage (by Example)](#usage-by-example)
     - [Taking Measurements](#taking-measurements)
     - [Visualizing Measurements](#visualizing-measurements)

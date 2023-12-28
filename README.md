@@ -88,7 +88,7 @@ show_plot_2d(table, Axis.Z, filename)
 
 The following image shows what the 2D WiFi heat map of a large building could look like. Here we are using a regular expression to filter for wifi access points transmitting on the 5GHz frequency band.
 
-<img width="972" alt="Screenshot 2023-12-28 at 10 18 27 PM" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/3c3acf61-cb7c-4184-befc-ec48aefe677c">
+<img width="972" alt="wifi heatmap of a large building" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/0609f885-953a-4155-825a-521babbbecdb">
 
 ## Component Overview
 

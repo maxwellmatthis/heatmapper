@@ -262,6 +262,7 @@ class Dataset:
         """
         Saves the dataset as JSON.
         """
+        self.modified = datetime.datetime.now().isoformat()
         filename = Dataset.make_safe_file_name(self.name) + ".json"
         with open(filename, "w") as file:
             file.write(json.dumps(self, cls=ObjectEncoder,

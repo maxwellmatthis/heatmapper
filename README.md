@@ -74,9 +74,9 @@ show_plot_3d(table, filename)
 show_plot_2d(table, Axis.Z, filename)
 ```
 
-The following image shows what the 2D WiFi heat map of a small building could look like. (Red=Bad,closer to -80dBm; Blue=Good,closer to -30dBm) The router is located at (15, 5). A circular pattern is clearly visible.
+The following image shows what the 2D WiFi heat map of a large building could look like. Here we are using a regular expression to filter for wifi access points transmitting on the 5GHz frequency band.
 
-![building-wifi-map](https://github.com/maxwellmatthis/heatmapper/assets/58150536/2c6d728b-b7ea-4c75-99b1-5f14bafe94cb)
+<img width="972" alt="Screenshot 2023-12-28 at 10 18 27 PM" src="https://github.com/maxwellmatthis/heatmapper/assets/58150536/3c3acf61-cb7c-4184-befc-ec48aefe677c">
 
 ## Component Overview
 

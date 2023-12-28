@@ -83,6 +83,10 @@ def prepare_get_access_points_macos(interface: str):
                           SSID BSSID             RSSI CHANNEL HT CC SECURITY (auth/unicast/group)
                 My Network 123 ab:12:34:56:78:cd -88  36,+1   Y  -- RSN(802.1x/AES/AES)
                  Other Network ef:cd:78:56:34:12 -75  1       Y  -- RSN(PSK/AES/AES)
+
+        1 IBSS network found:
+                          SSID BSSID             RSSI CHANNEL HT CC SECURITY (auth/unicast/group)
+                         SETUP de:00:00:12:34:56 -81  11      Y  -- NONE
         ```
         """
         rows = subprocess.run(
@@ -111,7 +115,10 @@ def prepare_get_access_points_macos(interface: str):
             ) else "") + f"CHANNEL:{channel};SECURITY:{security}"
 
             rssi = row[start_of_rssi_column:start_of_rssi_column+4].strip()
-            rssi = float(rssi)
+            try:
+                rssi = float(rssi)
+            except:
+                continue
 
             APs[ap_identifier] = Value(RSSI, rssi)
 

@@ -4,7 +4,7 @@ The location service calculates the location of the marker based on angle measur
 
 ## Installation
 
-__Prerequisites__:
+__Prerequisites:__
 
 - [Bun](https://bun.sh)
 
@@ -16,6 +16,8 @@ __Prerequisites__:
 2. Set the `BUN_PORT` environment variable to a port of your choosing. Defaults to `3000`.
 3. Run the server using `bun run .`.
 4. Navigate to the server's hostname and port in your browser.
+
+__Warning:__ Many modern browsers require an encrypted (`HTTPS`, `SSL/TLS`) connection to access the camera feed. You'll need to run this program on a server with a globally valid certificate or create your own and manually install it on the devices that you intend to use as cameras. An exception is usually made for `localhost`, which at least makes testing easier.
 
 ## Tests
 

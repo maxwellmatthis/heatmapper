@@ -90,15 +90,21 @@ const findMarkerNow = document.querySelector("button#findMarkerNow");
 const hiddenCanvas = document.createElement("canvas");
 const hiddenCtx = hiddenCanvas.getContext("2d");
 
-navigator.mediaDevices
-    .getUserMedia({ video: true, audio: false })
-    .then((stream) => {
-        video.srcObject = stream;
-        video.play();
-    })
-    .catch((err) => {
-        console.error(err);
-    });
+if (!window?.navigator?.mediaDevices?.getUserMedia) {
+    document.querySelector("div#streamWarning").style.display = "";
+    if (!window.location.protocol.includes("s")) document.querySelector("p#streamWarningInsecureContext").style.display = "";
+    alert("`window?.navigator?.mediaDevices?.getUserMedia` does not exist.");
+} else {
+    navigator.mediaDevices
+        .getUserMedia({ video: true, audio: false })
+        .then((stream) => {
+            video.srcObject = stream;
+            video.play();
+        })
+        .catch((err) => {
+            console.error(err);
+        });
+}
 
 const width = document.body.clientWidth;
 let height = 0;
@@ -139,7 +145,7 @@ const calculateAnglesTo = (x, y) => {
     if (cameraId.value === "leftCamera") horizontalSidedAngleRad = cpd.horizontalViewFieldRad - ((x / video.videoWidth) * cpd.horizontalViewFieldRad); // angle from right
     else if (cameraId.value === "rightCamera") horizontalSidedAngleRad = ((x / video.videoWidth) * cpd.horizontalViewFieldRad); // angle from left
     else throw new Error("Bad Programmer");
-    
+
     const oneSideHorizontalBlindSpotRad = (Math.PI - cpd.horizontalViewFieldRad) / 2;
 
     return {

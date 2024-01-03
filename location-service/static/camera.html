@@ -55,6 +55,18 @@
         <div>
             <h2>Preview</h2>
             <h3 for="previewStream">Stream Preview</h3>
+            <div id="streamWarning" style="display: none; color: red;">
+                <p>
+                    `window?.navigator?.mediaDevices?.getUserMedia` does not exist.
+                    Therefore no camera feed can be loaded.
+                </p>
+                <p id="streamWarningInsecureContext" style="display: none;">
+                    This is likely due to the fact that you are accessing the location service via
+                    an unsafe connection (HTTP only; no SSL/TLS).
+                    Some browsers do not allow the camera to be accessed in insecure contexts for
+                    hosts that are not localhost.
+                </p>
+            </div>
             <video id="previewStream">Video stream not available.</video>
         </div>
         <div>

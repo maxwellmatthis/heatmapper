@@ -1,6 +1,6 @@
 import type { Server } from "bun";
 import { join } from "path";
-import { type Angles, calculateCoordinates } from "./trig";
+import { type Angles, calculateCoordinates, VERTICAL_ANGLE_DIFFERENCE_TOLERANCE_rad } from "./trig";
 
 const HM_KEY_ENV = "HM_KEY";
 const EXCHANGE_CHANNEL = "exchange";
@@ -76,6 +76,13 @@ type AngleRejecter = ((reason: string) => void) | null;
 let rejectLeftCamera: AngleRejecter = null;
 let rejectRightCamera: AngleRejecter = null;
 
+const clearCameraCallbacks = () => {
+    resolveLeftCamera = null;
+    resolveRightCamera = null;
+    rejectLeftCamera = null;
+    rejectRightCamera = null;
+};
+
 async function Location(server: Server) {
     const cameraPromises = Promise.all([
         new Promise<Angles>((resolve, reject) => {
@@ -90,9 +97,28 @@ async function Location(server: Server) {
     server.publish(EXCHANGE_CHANNEL, "find-marker");
 
     try {
-        const [leftAngles, rightAngles] = await cameraPromises;
-        return new Response(JSON.stringify(calculateCoordinates(leftAngles, rightAngles)));
+        const [leftCameraAngles, rightCameraAngles] = await cameraPromises;
+        clearCameraCallbacks();
+
+        const absVerticalAngleDifferenceRad = Math.abs(leftCameraAngles.verticalAngleRad - rightCameraAngles.verticalAngleRad);
+        // if (absVerticalAngleDifferenceRad > VERTICAL_ANGLE_DIFFERENCE_TOLERANCE_rad) {
+        //     console.warn(
+        //         `WARNING: The vertical angles differ by ${absVerticalAngleDifferenceRad / (Math.PI / 180)}`
+        //         + `°. These angles should ideally be the same. The difference tolerance is set to `
+        //         + `${VERTICAL_ANGLE_DIFFERENCE_TOLERANCE_rad / (Math.PI / 180)}°.`);
+        // }
+        const { x, y, z } = calculateCoordinates(leftCameraAngles, rightCameraAngles);
+        return new Response(JSON.stringify({
+            x,
+            y,
+            z,
+            absVerticalAngleDifferenceRad,
+            VERTICAL_ANGLE_DIFFERENCE_TOLERANCE_rad,
+            leftCameraAngles,
+            rightCameraAngles
+        }, null, 2));
     } catch (error) {
+        clearCameraCallbacks();
         return new Response(String(error));
     }
 }

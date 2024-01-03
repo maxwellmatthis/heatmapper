@@ -4,76 +4,79 @@ export interface Angles {
 }
 
 export const DISTANCE_BETWEEN_CAMERAS_m = 1;
-/** 120° in radians. (two angles of an equilateral triangle) */
-const DEG_120_RAD = (2 / 3) * Math.PI;
+export const VERTICAL_ANGLE_DIFFERENCE_TOLERANCE_rad = (5 / 180) * Math.PI;
 
-export function roundTo(n: number, decimals: number = 5) {
+export function roundPrecision(n: number, decimals: number = 5) {
     const decimalsMover = Math.pow(10, decimals);
     return Math.round(n * decimalsMover) / decimalsMover;
 }
 
+/**
+ * Calculates the three dimensional coordinates of an object based on the angles to the object
+ * from two points.
+ * 
+ * @param leftCameraAngles The angle data from the left camera.
+ * @param rightCameraAngles The angle data from the right camera.
+ * 
+ * ## Points
+ *
+ * - A: Left Camera
+ * - B: Right Camera
+ * - C: Marker
+ */
 export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles: Angles) {
-    // -- horizontal part --
-    //                    C: Marker
-    //                    /\
-    //             h_b   /  \  h_a
-    //                  /    \
-    //                 /      \
-    // A: Left Camera /________\ B: Right Camera
-    //                   h_c = DISTANCE_BETWEEN_CAMERAS_m
+    const absAC = calculateDistanceToC(leftCameraAngles.horizontalAngleRad, rightCameraAngles.horizontalAngleRad);
+    const absBC = calculateDistanceToC(rightCameraAngles.horizontalAngleRad, leftCameraAngles.horizontalAngleRad);
 
-    const h_alpha = leftCameraAngles.horizontalAngleRad;
-    const h_beta = rightCameraAngles.horizontalAngleRad;
-    const h_c = DISTANCE_BETWEEN_CAMERAS_m;
-    let h_b: number | null = null;
+    const x_per_absAC = (Math.pow(absAC, 2) + Math.pow(DISTANCE_BETWEEN_CAMERAS_m, 2) - Math.pow(absBC, 2)) / (2 * absAC * DISTANCE_BETWEEN_CAMERAS_m);
+    const x = absAC * x_per_absAC;
+    const r = absAC * Math.sin(Math.acos(x_per_absAC));
+    const y = Math.cos(leftCameraAngles.verticalAngleRad) * r;
+    const z = Math.sin(leftCameraAngles.verticalAngleRad) * r;
 
-    if (h_alpha + h_beta < DEG_120_RAD) {
-        // hypotenuse: `h_c`
-        // `sin(h_beta) = h_b / h_c`
-        h_b = Math.sin(h_beta) * h_c;
+    return {
+        x: roundPrecision(x),
+        y: roundPrecision(y),
+        z: roundPrecision(z)
+    };
+}
+
+/**
+ * ## Points
+ *
+ * - A: Left Camera
+ * - B: Right Camera
+ * - C: Marker
+ *
+ * ## Sketch
+ * 
+ * ```
+ *           C_
+ *          /  °__
+ *     b1  /      °__
+ *        /          °__
+ *       /              °__
+ *      /°_____            °__
+ * b2  /       °_____  d      °__
+ *    /              °_____      °__
+ *   /                     °_____   °__
+ *  /                           °_____ °__
+ * A°^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^°B
+ * ```
+ */
+export function calculateDistanceToC(alpha: number, beta: number) {
+    const c = DISTANCE_BETWEEN_CAMERAS_m;
+
+    const d = Math.sin(alpha) * c;
+    const b1 = Math.cos(alpha) * c;
+    const gamma = Math.PI - alpha - beta;
+    if (alpha + beta > (1 / 2) * Math.PI) {
+        const b2 = d / Math.tan(gamma);
+        return b1 + b2;
+    } else if (alpha + beta < (1 / 2) * Math.PI) {
+        const b2 = d / Math.tan(Math.PI - gamma);
+        return b1 - b2;
     } else {
-        if (h_alpha > h_beta) {
-            // hypotenuse: `h_a`
-            // `cos(h_beta) = h_c / h_a`
-            let h_a = h_c / Math.cos(h_beta);
-            // Using: Law of Cosines (`c^2 = a^2 + b^2 - 2ab*cos(gamma)`)
-            h_b = Math.sqrt(Math.pow(h_a, 2) + Math.pow(h_c, 2) - 2 * h_a * h_c * Math.cos(h_beta));
-        } else {
-            // hypotenuse: `h_b`
-            // `cos(h_alpha) = h_c / h_b`
-            h_b = h_c / Math.cos(h_alpha);
-        }
+        return b1;
     }
-
-    // const h_C_x = Math.cos(h_alpha) * h_b;
-    // const h_C_y = Math.sin(h_alpha) * h_b;
-    // console.log(v_C_x, v_C_y);
-
-    // -- vertical part --
-    //                    *
-    //                       *     v_a: Elevation
-    //                        _*  /
-    //                    __° | */
-    //           h_b  __°     | /*
-    //            __°         |L  *
-    //        __°    \        |    *
-    //    __° v_alpha \     /.|    *
-    // (A)-------------------------*
-    //     h_b: Distance to Marker *
-    //    |<----------------->|    *
-    //     h_r: Real Horizontal   *
-    //                           *
-    //                          *
-    //                        *
-
-    const v_alpha = leftCameraAngles.verticalAngleRad;
-
-    const v_a = Math.sin(v_alpha) * h_b;
-    const h_r = Math.cos(v_alpha) * h_b;
-
-    const C_x = Math.cos(h_alpha) * h_r;
-    const C_y = Math.sin(h_alpha) * h_r;
-    const C_z = v_a;
-
-    return { x: roundTo(C_x), y: roundTo(C_y), z: roundTo(C_z) };
 }

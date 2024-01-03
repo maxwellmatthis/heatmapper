@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heatmapper Location Service - Camera</title>
+    <script src="camera.js" defer type="module"></script>
+    <style>
+        body {
+            background-color: rgb(36, 36, 36);
+            color: rgb(245, 245, 245);
+            font-family: monospace, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Heatmapper Location Service - Camera</h1>
+    <section>
+        <h2>Connect to Location Service</h2>
+        <div>
+            <label for="key">Key</label>
+            <input type="password" id="key" placeholder="key">
+        </div>
+        <div>
+            <label for="cameraId">Camera</label>
+            <select name="cameraId" id="cameraId">
+                <option value="leftCamera">Left Camera</option>
+                <option value="rightCamera">Right Camera</option>
+            </select>
+        </div>
+        <button id="connect">Connect</button>
+        <div>Connection Status: <span id="connectionStatus">Disconnected ❌</span></div>
+    </section>
+    <section>
+        <h2>Settings</h2>
+        <div>
+            <label for="cameraProfile">Camera Profile</label>
+            <select name="cameraProfile" id="cameraProfile">
+                <option value="desktop">Desktop</option>
+            </select>
+        </div>
+        <div>
+            <label for="markerType">Marker Type</label>
+            <select name="markerType" id="markerType">
+                <option value="brightest">Brightest (Most White)</option>
+                <option value="mostRed">Most Red</option>
+                <option value="mostGreen">Most Green</option>
+                <option value="mostBlue">Most Blue</option>
+            </select>
+        </div>
+    </section>
+    <section>
+        <div>
+            <h2>Preview</h2>
+            <h3 for="previewStream">Stream Preview</h3>
+            <video id="previewStream">Video stream not available.</video>
+        </div>
+        <div>
+            <h3>Tracking Result Preview</h3>
+            <button id="findMarkerNow">Find Marker Now</button>
+            <canvas id="previewTrackingResult">Your Browser does not support the Canvas API.</canvas>
+            <div>
+                <h4>Marker Location</h4>
+                <div>X: <span id="previewTrackingResultX">N/A</span></div>
+                <div>Y: <span id="previewTrackingResultY">N/A</span></div>
+                <div>Horizontal Angle: <span id="previewTrackingResultHorizontal">N/A</span></div>
+                <div>Vertical Angle: <span id="previewTrackingResultVertical">N/A</span></div>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

@@ -27,36 +27,21 @@ export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles
     const h_c = DISTANCE_BETWEEN_CAMERAS_m;
     let h_b: number | null = null;
 
-    if (h_alpha === h_beta) {
-        if (h_alpha + h_beta === DEG_120_RAD) {
-            // hypotenuse: `h_c`, `h_a` and `h_b`
-            h_b = h_c;
-        } else if (h_alpha + h_beta < DEG_120_RAD) {
-            // hypotenuse: `h_c`
-            // `sin(h_beta) = h_b / h_c`
-            h_b = Math.sin(h_beta) * h_c;
-        } else {
-            // hypotenuse: `h_b` and `h_a`
-            // `cos(h_alpha) = (h_c / 2) / h_b`
-            h_b = (h_c / 2) / Math.cos(h_alpha);
-        }
+    if (h_alpha + h_beta < DEG_120_RAD) {
+        // hypotenuse: `h_c`
+        // `sin(h_beta) = h_b / h_c`
+        h_b = Math.sin(h_beta) * h_c;
     } else {
-        if (h_alpha + h_beta < DEG_120_RAD) {
-            // hypotenuse: `h_c`
-            // `sin(h_beta) = h_b / h_c`
-            h_b = Math.sin(h_beta) * h_c;
+        if (h_alpha > h_beta) {
+            // hypotenuse: `h_a`
+            // `cos(h_beta) = h_c / h_a`
+            let h_a = h_c / Math.cos(h_beta);
+            // Using: Law of Cosines (`c^2 = a^2 + b^2 - 2ab*cos(gamma)`)
+            h_b = Math.sqrt(Math.pow(h_a, 2) + Math.pow(h_c, 2) - 2 * h_a * h_c * Math.cos(h_beta));
         } else {
-            if (h_alpha > h_beta) {
-                // hypotenuse: `h_a`
-                // `cos(h_beta) = h_c / h_a`
-                let h_a = h_c / Math.cos(h_beta);
-                // Using: Law of Cosines (`c^2 = a^2 + b^2 - 2ab*cos(gamma)`)
-                h_b = Math.sqrt(Math.pow(h_a, 2) + Math.pow(h_c, 2) - 2 * h_a * h_c * Math.cos(h_beta));
-            } else {
-                // hypotenuse: `h_b`
-                // `cos(h_alpha) = h_c / h_b`
-                h_b = h_c / Math.cos(h_alpha);
-            }
+            // hypotenuse: `h_b`
+            // `cos(h_alpha) = h_c / h_b`
+            h_b = h_c / Math.cos(h_alpha);
         }
     }
 

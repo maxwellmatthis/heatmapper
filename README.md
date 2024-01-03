@@ -2,6 +2,8 @@
 
 Software for recording, analyzing and visualizing data as three-dimensional heat maps.
 
+__Note:__ The documentation for the location-service sub-project is located in the README of the [location-service](location-service) directory.
+
 ## Table of Contents
 
 - [Installation & Setup](#installation--setup)

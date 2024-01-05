@@ -15,6 +15,9 @@ enum Role {
     rightCamera = "rightCamera",
 }
 
+let leftCameraConnected = false;
+let rightCameraConnected = false;
+
 const server = Bun.serve<{ role: Role; }>({
     development: false,
     async fetch(req, server) {
@@ -42,16 +45,23 @@ const server = Bun.serve<{ role: Role; }>({
         return new Response("Error 404: Not Found.", { status: 404 });
     },
     websocket: {
-        open: (ws) => { ws.subscribe(EXCHANGE_CHANNEL); },
+        open: (ws) => {
+            ws.subscribe(EXCHANGE_CHANNEL);
+            if (ws.data.role === Role.leftCamera) leftCameraConnected = true;
+            else rightCameraConnected = true;
+        },
         message: (ws, message) => {
             handleAnglesMessage(message, ws.data.role);
         },
-        close: (ws) => { ws.unsubscribe(EXCHANGE_CHANNEL); },
+        close: (ws) => {
+            ws.unsubscribe(EXCHANGE_CHANNEL);
+            if (ws.data.role === Role.leftCamera) leftCameraConnected = true;
+            else rightCameraConnected = true;
+        },
     },
 });
 
 console.log(`Listening on ${server.hostname}:${server.port}`);
-
 
 function Exchange(req: Request, server: Server, url: URL) {
     let role = url.searchParams.get("camera");
@@ -84,6 +94,10 @@ const clearCameraCallbacks = () => {
 };
 
 async function Location(server: Server) {
+    if (!leftCameraConnected || !rightCameraConnected) {
+        return new Response("One or both cameras required to compute the marker location are currently not connected to the server.");
+    }
+
     const cameraPromises = Promise.all([
         new Promise<Angles>((resolve, reject) => {
             resolveLeftCamera = resolve;

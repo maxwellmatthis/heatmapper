@@ -17,6 +17,7 @@ export function roundPrecision(n: number, decimals: number = 5) {
  * 
  * @param leftCameraAngles The angle data from the left camera.
  * @param rightCameraAngles The angle data from the right camera.
+ * @param distanceBetweenCameras The distance between the cameras. This parameter may be used as an override for the default value `DISTANCE_BETWEEN_CAMERAS_m`.
  * 
  * ## Points
  *
@@ -24,15 +25,13 @@ export function roundPrecision(n: number, decimals: number = 5) {
  * - B: Right Camera
  * - C: Marker
  */
-export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles: Angles) {
-    const absAC = calculateDistanceToC(leftCameraAngles.horizontalAngleRad, rightCameraAngles.horizontalAngleRad);
-    const absBC = calculateDistanceToC(rightCameraAngles.horizontalAngleRad, leftCameraAngles.horizontalAngleRad);
+export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles: Angles, distanceBetweenCameras = DISTANCE_BETWEEN_CAMERAS_m) {
+    const absAC = calculateLengthAC(leftCameraAngles.horizontalAngleRad, rightCameraAngles.horizontalAngleRad, distanceBetweenCameras);
 
-    const x_per_absAC = (Math.pow(absAC, 2) + Math.pow(DISTANCE_BETWEEN_CAMERAS_m, 2) - Math.pow(absBC, 2)) / (2 * absAC * DISTANCE_BETWEEN_CAMERAS_m);
-    const x = absAC * x_per_absAC;
-    const r = absAC * Math.sin(Math.acos(x_per_absAC));
-    const y = Math.cos(leftCameraAngles.verticalAngleRad) * r;
-    const z = Math.sin(leftCameraAngles.verticalAngleRad) * r;
+    const x = absAC * Math.cos(leftCameraAngles.horizontalAngleRad);
+    const r = absAC * Math.sin(leftCameraAngles.horizontalAngleRad);
+    const y = r * Math.cos(leftCameraAngles.verticalAngleRad);
+    const z = r * Math.sin(leftCameraAngles.verticalAngleRad);
 
     return {
         x: roundPrecision(x),
@@ -42,6 +41,12 @@ export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles
 }
 
 /**
+ * Calculates the length of `AC` given the angles `alpha` and `beta`.
+ * 
+ * @param alpha The angle alpha (see sketch).
+ * @param beta The angle beta (see sketch).
+ * @param distanceBetweenCameras The distance between the cameras. This parameter may be used as an override for the default value `DISTANCE_BETWEEN_CAMERAS_m`.
+ * 
  * ## Points
  *
  * - A: Left Camera
@@ -50,33 +55,46 @@ export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles
  *
  * ## Sketch
  * 
+ * - only alpha, beta and c are known
+ * - d ⏊ b
+ * 
  * ```
- *           C_
- *          /  °__
- *     b1  /      °__
- *        /          °__
- *       /              °__
- *      /°_____            °__
- * b2  /       °_____  d      °__
- *    /              °_____      °__
- *   /                     °_____   °__
- *  /                           °_____ °__
- * A°^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^°B
+ * >            C_
+ * >           /  °,_
+ * >          /      °,_
+ * >         / b1       °,_
+ * >        /              °,_  a
+ * >     b /°--,__            °,_
+ * >      /       °--,__  d      °,_
+ * >     / b2           °--,__      °,_
+ * >    /                     °--,__   °,_
+ * >   /                            °--,__°,_
+ * >  A°^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^°B
+ * >                     c = DISTANCE_BETWEEN_CAMERAS_m
  * ```
  */
-export function calculateDistanceToC(alpha: number, beta: number) {
-    const c = DISTANCE_BETWEEN_CAMERAS_m;
+export function calculateLengthAC(alpha: number, beta: number, distanceBetweenCameras = DISTANCE_BETWEEN_CAMERAS_m) {
+    const c = distanceBetweenCameras;
 
+    // sin(alpha) = d / c
     const d = Math.sin(alpha) * c;
+    // cos(alpha) = b1 / c
     const b1 = Math.cos(alpha) * c;
+    // 180° = alpha + beta + gamma
     const gamma = Math.PI - alpha - beta;
+
     if (alpha + beta > (1 / 2) * Math.PI) {
+        // gamma is acute
+        // tan(gamma) = d / b2
         const b2 = d / Math.tan(gamma);
         return b1 + b2;
     } else if (alpha + beta < (1 / 2) * Math.PI) {
+        // gamma is obtuse
+        // tan(pi - gamma) = d / b2
         const b2 = d / Math.tan(Math.PI - gamma);
         return b1 - b2;
     } else {
+        // gamma is right
         return b1;
     }
 }

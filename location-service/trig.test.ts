@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { calculateDistanceToC, calculateCoordinates, roundPrecision } from "./trig";
+import { calculateLengthAC, calculateCoordinates, roundPrecision } from "./trig";
 
 // -- rounding --
 test("pi (3.1415926536) to 5 decimals precision", () => {
@@ -14,7 +14,7 @@ test("e (2.7182818285) to 2 decimals precision", () => {
 
 // -- distance to C --
 test("both 60° horizontal", () => {
-  expect(calculateDistanceToC(
+  expect(calculateLengthAC(
     (1 / 3) * Math.PI,
     (1 / 3) * Math.PI
   ))
@@ -22,7 +22,7 @@ test("both 60° horizontal", () => {
 });
 
 test("left 45°, right 60°", () => {
-  expect(calculateDistanceToC(
+  expect(calculateLengthAC(
     (1 / 4) * Math.PI,
     (1 / 3) * Math.PI
   ))
@@ -30,7 +30,7 @@ test("left 45°, right 60°", () => {
 });
 
 test("left 1°, right 178°", () => {
-  expect(calculateDistanceToC(
+  expect(calculateLengthAC(
     (1 / 180) * Math.PI,
     (178 / 180) * Math.PI
   ))
@@ -38,10 +38,10 @@ test("left 1°, right 178°", () => {
 });
 
 test("switching the order of the parameters to get the other distance", () => {
-  expect(calculateDistanceToC(
+  expect(calculateLengthAC(
     (1 / 180) * Math.PI,
     (178 / 180) * Math.PI
-  ) + calculateDistanceToC(
+  ) + calculateLengthAC(
     (178 / 180) * Math.PI,
     (1 / 180) * Math.PI
   ))
@@ -89,6 +89,21 @@ test("all angles 60°", () => {
     verticalAngleRad: ANGLE
   });
   expect(x).toBeCloseTo(0.5);
+  expect(y).toBeCloseTo(0.43301, 5);
+  expect(z).toBeCloseTo(0.75, 5);
+});
+
+test("60° vertical, 10m between cameras, same y-coordinate, half distance x-coordinate", () => {
+  const DISTANCE = 100;
+  const ANGLE = (1 / 3) * Math.PI;
+  const { x, y, z } = calculateCoordinates({
+    horizontalAngleRad: 0.01731877634, // value calculated using a calculator and piece of paper
+    verticalAngleRad: ANGLE
+  }, {
+    horizontalAngleRad: 0.01731877634,
+    verticalAngleRad: ANGLE
+  }, DISTANCE);
+  expect(x).toBeCloseTo((1 / 2) * DISTANCE);
   expect(y).toBeCloseTo(0.43301, 5);
   expect(z).toBeCloseTo(0.75, 5);
 });

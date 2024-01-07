@@ -79,6 +79,19 @@ test("4m in front of right camera", () => {
     });
 });
 
+test("horizontal angles 60° and 45°, vertical 0°", () => {
+  const { x, y, z } = calculateCoordinates({
+    horizontalAngleRad: (1 / 3) * Math.PI,
+    verticalAngleRad: 0
+  }, {
+    horizontalAngleRad: (1 / 4) * Math.PI,
+    verticalAngleRad: 0
+  });
+  expect(x).toBeCloseTo(0.36603, 5);
+  expect(y).toBeCloseTo(0.63397, 5);
+  expect(z).toBeCloseTo(0, 5);
+});
+
 test("all angles 60°", () => {
   const ANGLE = (1 / 3) * Math.PI;
   const { x, y, z } = calculateCoordinates({
@@ -88,12 +101,12 @@ test("all angles 60°", () => {
     horizontalAngleRad: ANGLE,
     verticalAngleRad: ANGLE
   });
-  expect(x).toBeCloseTo(0.5);
+  expect(x).toBeCloseTo(0.5, 5);
   expect(y).toBeCloseTo(0.43301, 5);
   expect(z).toBeCloseTo(0.75, 5);
 });
 
-test("60° vertical, 10m between cameras, same y-coordinate, half distance x-coordinate", () => {
+test("60° vertical, 10m between cameras, same y-coordinate as other 60° test, half distance x-coordinate", () => {
   const DISTANCE = 100;
   const ANGLE = (1 / 3) * Math.PI;
   const { x, y, z } = calculateCoordinates({
@@ -103,7 +116,7 @@ test("60° vertical, 10m between cameras, same y-coordinate, half distance x-coo
     horizontalAngleRad: 0.01731877634,
     verticalAngleRad: ANGLE
   }, DISTANCE);
-  expect(x).toBeCloseTo((1 / 2) * DISTANCE);
+  expect(x).toBeCloseTo((1 / 2) * DISTANCE, 5);
   expect(y).toBeCloseTo(0.43301, 5);
   expect(z).toBeCloseTo(0.75, 5);
 });
@@ -117,7 +130,7 @@ test("all angles 45°", () => {
     horizontalAngleRad: ANGLE,
     verticalAngleRad: ANGLE
   });
-  expect(x).toBeCloseTo(0.5);
+  expect(x).toBeCloseTo(0.5, 5);
   expect(y).toBeCloseTo(0.35355, 5);
   expect(z).toBeCloseTo(0.35355, 5);
 });
@@ -131,7 +144,7 @@ test("all angles 10°", () => {
     horizontalAngleRad: ANGLE,
     verticalAngleRad: ANGLE
   });
-  expect(x).toBeCloseTo(0.5);
+  expect(x).toBeCloseTo(0.5, 5);
   expect(y).toBeCloseTo(0.08682, 5);
   expect(z).toBeCloseTo(0.01531, 5);
 });
@@ -147,4 +160,18 @@ test("all angles garbage degrees (33°, 12° and 84°, 12°)", () => {
   expect(x).toBeCloseTo(0.93611, 5);
   expect(y).toBeCloseTo(0.59463, 5);
   expect(z).toBeCloseTo(0.12639, 5);
+});
+
+test("doc example", () => {
+  expect(calculateCoordinates({
+    horizontalAngleRad: (63.4 / 180) * Math.PI,
+    verticalAngleRad: (30 / 180) * Math.PI
+  }, {
+    horizontalAngleRad: (40.6 / 180) * Math.PI,
+    verticalAngleRad: (30 / 180) * Math.PI
+  })).toEqual({
+    x: 0.30031,
+    y: 0.51936,
+    z: 0.29985
+  })
 });

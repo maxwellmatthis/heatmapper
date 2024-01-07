@@ -27,9 +27,12 @@ export function roundPrecision(n: number, decimals: number = 5) {
  */
 export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles: Angles, distanceBetweenCameras = DISTANCE_BETWEEN_CAMERAS_m) {
     const absAC = calculateLengthAC(leftCameraAngles.horizontalAngleRad, rightCameraAngles.horizontalAngleRad, distanceBetweenCameras);
+    const absBC = calculateLengthAC(rightCameraAngles.horizontalAngleRad, leftCameraAngles.horizontalAngleRad, distanceBetweenCameras);
+    console.log("absAC", absAC, "absBC", absBC);
 
     const x = absAC * Math.cos(leftCameraAngles.horizontalAngleRad);
     const r = absAC * Math.sin(leftCameraAngles.horizontalAngleRad);
+    console.log("ac_x", x, "ac_r", r, "bc_x", absBC * Math.cos(rightCameraAngles.horizontalAngleRad), "bc_r", absBC * Math.sin(rightCameraAngles.horizontalAngleRad));
     const y = r * Math.cos(leftCameraAngles.verticalAngleRad);
     const z = r * Math.sin(leftCameraAngles.verticalAngleRad);
 
@@ -56,20 +59,41 @@ export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles
  * ## Sketch
  * 
  * - only alpha, beta and c are known
+ * - slightly different calculations need to be performed based on the angle gamma
+ * 
+ * ### Acute Gamma
+ * 
  * - d ⏊ b
  * 
  * ```
  * >            C_
  * >           /  °,_
  * >          /      °,_
- * >         / b1       °,_
+ * >         / b2       °,_
  * >        /              °,_  a
  * >     b /°--,__            °,_
  * >      /       °--,__  d      °,_
- * >     / b2           °--,__      °,_
+ * >     / b1           °--,__      °,_
  * >    /                     °--,__   °,_
  * >   /                            °--,__°,_
  * >  A°^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^°B
+ * >                     c = DISTANCE_BETWEEN_CAMERAS_m
+ * ```
+ * 
+ * ### Obtuse Gamma
+ * 
+ * - b1 ⏊ a
+ * 
+ * ```
+ * >                H_
+ * >               /° °\_
+ * >             /° b2   °\_
+ * >      b1   /°           °\_  a
+ * >         (C)-,,__  d       °\_
+ * >       /°        °--,,__      °\_
+ * >     /° b               °--,,__  °\_
+ * >   /°                          °--,_°\_
+ * >  A°^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^°B
  * >                     c = DISTANCE_BETWEEN_CAMERAS_m
  * ```
  */

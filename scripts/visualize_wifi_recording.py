@@ -12,8 +12,8 @@ instrument = Dataset.load(filename).get_instrument("WiFi")
 table = instrument.measurements_as_table(["."], MergeFunction.max)
 
 # print data as a csv (e.g., for use in Excel)
-print(table.csv())
+# print(table.csv())
 
 # 3d or 2d visualization using matplotlib
-show_plot_3d(table, filename)
-show_plot_2d(table, Axis.Z, filename)
+# show_plot_3d(table)
+show_plot_2d(table, Axis.Z)

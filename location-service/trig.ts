@@ -27,12 +27,9 @@ export function roundPrecision(n: number, decimals: number = 5) {
  */
 export function calculateCoordinates(leftCameraAngles: Angles, rightCameraAngles: Angles, distanceBetweenCameras = DISTANCE_BETWEEN_CAMERAS_m) {
     const absAC = calculateLengthAC(leftCameraAngles.horizontalAngleRad, rightCameraAngles.horizontalAngleRad, distanceBetweenCameras);
-    const absBC = calculateLengthAC(rightCameraAngles.horizontalAngleRad, leftCameraAngles.horizontalAngleRad, distanceBetweenCameras);
-    console.log("absAC", absAC, "absBC", absBC);
 
     const x = absAC * Math.cos(leftCameraAngles.horizontalAngleRad);
     const r = absAC * Math.sin(leftCameraAngles.horizontalAngleRad);
-    console.log("ac_x", x, "ac_r", r, "bc_x", absBC * Math.cos(rightCameraAngles.horizontalAngleRad), "bc_r", absBC * Math.sin(rightCameraAngles.horizontalAngleRad));
     const y = r * Math.cos(leftCameraAngles.verticalAngleRad);
     const z = r * Math.sin(leftCameraAngles.verticalAngleRad);
 

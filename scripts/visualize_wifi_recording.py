@@ -9,7 +9,11 @@ filename = sys.argv[1]
 instrument = Dataset.load(filename).get_instrument("WiFi")
 # filter values by value identifier (using regex) and supplying a function that decides
 # how to merge multiple values that both match the regex
-table = instrument.measurements_as_table(["."], MergeFunction.max)
+table = instrument.measurements_as_table(["Alstergym_WIFI", "CHANNEL:([1-9][2-9]|20)"], MergeFunction.max)
+# table = instrument.measurements_as_table(["CHANNEL:([1-9][2-9]|20)"], MergeFunction.max)
+# table = instrument.measurements_as_table(["SSID:Alstergym_WIFI"], MergeFunction.max)
+# table = instrument.measurements_as_table(["^((?!Alstergym).)*$"], MergeFunction.max)
+table = instrument.measurements_as_table(["MAC:86:25:19:8f:b6:86"], MergeFunction.max)
 
 # print data as a csv (e.g., for use in Excel)
 # print(table.csv())
